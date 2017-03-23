@@ -430,10 +430,10 @@ b. Require developers to download those libraries manually (this creates extra w
 
 Priorities: High (must have) - `* * *`, Medium (nice to have)  - `* *`,  Low (unlikely to have) - `*`
 
-
+12345678901234567890123456789012345678901234567890123456789012345678901234567890
 | Priority | As a ...                                    | I want to ...                                                                                                        | So that I can...                                                                      |
 |----------|---------------------------------------------|----------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
-| `* * *`  | user                                        | obtain a list of tasks due today / this week                                                                         | plan my time to complete these urgent tasks before they are due                       |
+| `* * *`  | user                                        | obtain a list of tasks due <br/> today / this week                                                                         | plan my time to complete these urgent tasks before they are due                       |
 | `* * *`  | user                                        | view tasks planned to be completed within a certain time range                                                       | easily decide on tasks I should work on during that period                            |
 | `* * *`  | user                                        | indicate a starting and ending time for my tasks                                                                     | keep track of events I need to attend                                                 |
 | `* * *`  | user                                        | display my tasks in a calendar view                                                                                  | obtain a general overview of the tasks I need to complete                             |
@@ -573,6 +573,55 @@ Use case ends.
 > 2a1. `Tache` shows that it has nothing to undo <br>
 Use case ends
 
+### Use case: Edit task
+
+**MSS**
+
+1. `User` request to edit a specific task
+2. `Tache` shows confirmation that task has been edited and changes are reflected in UI<br>
+Use case ends.
+
+**Extensions**
+
+1a. [Parameters](#parameter) are wrong
+
+> 1a1. `Tache` informs `User` that the parameters for the edit command are wrong<br>
+Use case ends.
+
+### Use case: List tasks
+
+**MSS**
+
+1. `User` request to list tasks with optional filter parameter
+2. `Tache` shows lists of tasks<br>
+Use case ends.
+
+**Extensions**
+
+1a. [Parameters](#parameter) are wrong
+
+> 1a1. `Tache` informs `User` that the parameter for the list command is wrong<br>
+Use case ends.
+
+1b. [Parameters](#parameter) not given
+
+> 1b1. `Tache` shows `User` all tasks<br>
+Use case ends.
+
+### Use case: Complete tasks
+
+**MSS**
+
+1. `User` request to complete tasks
+2. `Tache` shows confirmation and completed tasks are no longer reflected in UI<br>
+Use case ends.
+
+**Extensions**
+
+1a. [Parameters](#parameter) are wrong
+
+> 1a1. `Tache` informs `User` that the parameters for the complete command are wrong<br>
+Use case ends.
 
 ## Appendix C : Non Functional Requirements
 
