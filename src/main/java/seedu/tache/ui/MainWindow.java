@@ -33,12 +33,13 @@ public class MainWindow extends UiPart<Region> {
     private Logic logic;
 
     // Independent Ui parts residing in this Ui container
-    private CalendarPanel calendarPanel;
+    private BrowserPanel browserPanel;
     private TaskListPanel taskListPanel;
+    private TaskListPanel detailedTaskListPanel;
     private Config config;
 
     @FXML
-    private AnchorPane calendarPlaceholder;
+    private AnchorPane browserPlaceholder;
 
     @FXML
     private AnchorPane commandBoxPlaceholder;
@@ -46,16 +47,11 @@ public class MainWindow extends UiPart<Region> {
     @FXML
     private MenuItem helpMenuItem;
 
-    //@@author A0142255M
-    @FXML
-    private AnchorPane taskListTypePlaceholder;
-
-    @FXML
-    private AnchorPane taskCountPlaceholder;
-    //@@author
-
     @FXML
     private AnchorPane taskListPanelPlaceholder;
+
+    @FXML
+    private AnchorPane detailedTaskListPanelPlaceholder;
 
     @FXML
     private AnchorPane resultDisplayPlaceholder;
@@ -120,21 +116,15 @@ public class MainWindow extends UiPart<Region> {
         });
     }
 
-    //@@author A0142255M
     void fillInnerParts() {
-        calendarPanel = new CalendarPanel(getCalendarPlaceholder(), logic.getFilteredTaskList());
+        browserPanel = new BrowserPanel(browserPlaceholder);
         taskListPanel = new TaskListPanel(getTaskListPlaceholder(), logic.getFilteredTaskList());
-        new TaskListType(getTaskListTypePlaceholder(), logic.getFilteredTaskListType());
-        new TaskCount(getTaskCountPlaceholder(), logic);
+        detailedTaskListPanel = new TaskListPanel(logic.getFilteredDetailedTaskList(),
+                                                  getDetailedTaskListPlaceholder());
         new ResultDisplay(getResultDisplayPlaceholder());
         new StatusBarFooter(getStatusbarPlaceholder(), config.getTaskManagerFilePath());
         new CommandBox(getCommandBoxPlaceholder(), logic);
     }
-
-    private AnchorPane getCalendarPlaceholder() {
-        return calendarPlaceholder;
-    }
-    //@@author
 
     private AnchorPane getCommandBoxPlaceholder() {
         return commandBoxPlaceholder;
@@ -148,18 +138,12 @@ public class MainWindow extends UiPart<Region> {
         return resultDisplayPlaceholder;
     }
 
-    //@@author A0142255M
-    private AnchorPane getTaskCountPlaceholder() {
-        return taskCountPlaceholder;
-    }
-
-    private AnchorPane getTaskListTypePlaceholder() {
-        return taskListTypePlaceholder;
-    }
-    //@@author
-
     private AnchorPane getTaskListPlaceholder() {
         return taskListPanelPlaceholder;
+    }
+
+    private AnchorPane getDetailedTaskListPlaceholder() {
+        return detailedTaskListPanelPlaceholder;
     }
 
     void hide() {
@@ -225,14 +209,16 @@ public class MainWindow extends UiPart<Region> {
         return this.taskListPanel;
     }
 
-    //@@author A0142255M
-    void viewTaskEvent(ReadOnlyTask task) {
-        //browserPanel.viewEvent(task);
+    public TaskListPanel getDetailedTaskListPanel() {
+        return this.detailedTaskListPanel;
     }
-    //@@author
+
+    void loadTaskPage(ReadOnlyTask task) {
+        browserPanel.loadTaskPage(task);
+    }
 
     void releaseResources() {
-        calendarPanel.freeResources();
+        browserPanel.freeResources();
     }
 
 }

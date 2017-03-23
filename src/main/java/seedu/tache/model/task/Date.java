@@ -1,38 +1,26 @@
-//@@author A0139925U
 package seedu.tache.model.task;
-
-import java.text.SimpleDateFormat;
-
-import java.util.Date;
-import java.util.List;
-
-import org.ocpsoft.prettytime.PrettyTime;
-import org.ocpsoft.prettytime.nlp.PrettyTimeParser;
 
 import seedu.tache.commons.exceptions.IllegalValueException;
 
-
-public class DateTime {
+public class Date {
 
     public static final String MESSAGE_DATE_CONSTRAINTS =
             "Task date should only contain <CONSTRAINT>";
 
-    public final Date date;
+    public final String date;
 
     /**
      * Validates given date.
      *
      * @throws IllegalValueException if given date string is invalid.
      */
-    public DateTime(String date) {
+    public Date(String date) throws IllegalValueException {
         assert date != null;
         String trimmedStartDate = date.trim();
-        List<Date> temp = new PrettyTimeParser().parse(trimmedStartDate);
-
         /*if (!isValidDate(trimmedStartDate)) {
             throw new IllegalValueException(MESSAGE_TIME_CONSTRAINTS);
         }*/
-        this.date = temp.get(0);
+        this.date = trimmedStartDate;
     }
 
     /**
@@ -44,23 +32,7 @@ public class DateTime {
 
     @Override
     public String toString() {
-        return new PrettyTime().format(date);
-    }
-
-    public String getDateOnly() {
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        return sdf.format(date);
-    }
-
-    public String getTimeOnly() {
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-        return sdf.format(date);
-    }
-
-    //@@author A0142255M
-    public String getDateTimeForFullCalendar() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        return sdf.format(date);
+        return date;
     }
 
    /* @Override

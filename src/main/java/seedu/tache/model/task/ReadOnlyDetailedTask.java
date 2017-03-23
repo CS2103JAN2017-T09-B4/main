@@ -3,12 +3,16 @@ package seedu.tache.model.task;
 import seedu.tache.model.tag.UniqueTagList;
 
 /**
- * A read-only immutable interface for a Task in the task manager.
+ * A read-only immutable interface for a DetailedTask in the task manager.
  * Implementations should guarantee: details are present and not null, field values are validated.
  */
-public interface ReadOnlyTask {
+public interface ReadOnlyDetailedTask {
 
     Name getName();
+    Date getStartDate();
+    Date getEndDate();
+    Time getStartTime();
+    Time getEndTime();
 
     /**
      * The returned TagList is a deep copy of the internal TagList,

@@ -1,4 +1,3 @@
-//@@author A0139925U
 package seedu.tache.logic.commands;
 
 import java.util.List;
@@ -8,18 +7,22 @@ import seedu.tache.commons.core.Messages;
 import seedu.tache.commons.util.CollectionUtil;
 import seedu.tache.logic.commands.exceptions.CommandException;
 import seedu.tache.model.tag.UniqueTagList;
-import seedu.tache.model.task.DateTime;
+import seedu.tache.model.task.Date;
+import seedu.tache.model.task.DetailedTask;
 import seedu.tache.model.task.Name;
+import seedu.tache.model.task.ReadOnlyDetailedTask;
 import seedu.tache.model.task.ReadOnlyTask;
 import seedu.tache.model.task.Task;
-import seedu.tache.model.task.Task.RecurInterval;
+import seedu.tache.model.task.Time;
+import seedu.tache.model.task.UniqueDetailedTaskList;
 import seedu.tache.model.task.UniqueTaskList;
-import seedu.tache.model.task.UniqueTaskList.DuplicateTaskException;
 
 /**
  * Edits the details of an existing task in the task manager.
  */
-public class EditCommand extends Command implements Undoable {
+public class EditCommand extends Command {
+
+    public enum TaskType { TypeTask, TypeDetailedTask };
 
     public static final String COMMAND_WORD = "edit";
 
@@ -36,10 +39,7 @@ public class EditCommand extends Command implements Undoable {
 
     private final int filteredTaskListIndex;
     private final EditTaskDescriptor editTaskDescriptor;
-
-    private boolean commandSuccess;
-    private ReadOnlyTask taskToEdit;
-    private ReadOnlyTask originalTask;
+    private TaskType taskType;
 
     /**
      * @param filteredTaskListIndex the index of the task in the filtered task list to edit
@@ -53,29 +53,62 @@ public class EditCommand extends Command implements Undoable {
         this.filteredTaskListIndex = filteredTaskListIndex - 1;
 
         this.editTaskDescriptor = new EditTaskDescriptor(editTaskDescriptor);
-        commandSuccess = false;
+
+        this.taskType = TaskType.TypeTask;
+    }
+
+    /**
+     * @param filteredTaskListIndex the index of the task in the filtered task list to edit
+     * @param editTaskDescriptor details to edit the task with
+     * @param taskType to differentiate between type of task
+     */
+    public EditCommand(int filteredTaskListIndex, EditTaskDescriptor editTaskDescriptor, TaskType taskType) {
+        assert filteredTaskListIndex > 0;
+        assert editTaskDescriptor != null;
+
+        // converts filteredTaskListIndex from one-based to zero-based.
+        this.filteredTaskListIndex = filteredTaskListIndex - 1;
+
+        this.editTaskDescriptor = new EditTaskDescriptor(editTaskDescriptor);
+
+        this.taskType = taskType;
     }
 
     @Override
     public CommandResult execute() throws CommandException {
-        List<ReadOnlyTask> lastShownList = model.getFilteredTaskList();
+        if (taskType.equals(TaskType.TypeTask)) {
+            List<ReadOnlyTask> lastShownList = model.getFilteredTaskList();
 
-        if (filteredTaskListIndex >= lastShownList.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_TASK_DISPLAYED_INDEX);
-        }
+            if (filteredTaskListIndex >= lastShownList.size()) {
+                throw new CommandException(Messages.MESSAGE_INVALID_TASK_DISPLAYED_INDEX);
+            }
 
-        taskToEdit = lastShownList.get(filteredTaskListIndex);
-        originalTask = new Task(taskToEdit);
-        Task editedTask = createEditedTask(taskToEdit, editTaskDescriptor);
-        try {
-            model.updateTask(taskToEdit, editedTask);
-        } catch (UniqueTaskList.DuplicateTaskException dpe) {
-            throw new CommandException(MESSAGE_DUPLICATE_TASK);
+            ReadOnlyTask taskToEdit = lastShownList.get(filteredTaskListIndex);
+            Task editedTask = createEditedTask(taskToEdit, editTaskDescriptor);
+            try {
+                model.updateTask(filteredTaskListIndex, editedTask);
+            } catch (UniqueTaskList.DuplicateTaskException dpe) {
+                throw new CommandException(MESSAGE_DUPLICATE_TASK);
+            }
+            model.updateFilteredListToShowAll();
+            return new CommandResult(String.format(MESSAGE_EDIT_TASK_SUCCESS, taskToEdit));
+        } else {
+            List<ReadOnlyDetailedTask> lastShownList = model.getFilteredDetailedTaskList();
+
+            if (filteredTaskListIndex >= lastShownList.size()) {
+                throw new CommandException(Messages.MESSAGE_INVALID_TASK_DISPLAYED_INDEX);
+            }
+
+            ReadOnlyDetailedTask taskToEdit = lastShownList.get(filteredTaskListIndex);
+            DetailedTask editedTask = createEditedTask(taskToEdit, editTaskDescriptor);
+            try {
+                model.updateDetailedTask(filteredTaskListIndex, editedTask);
+            } catch (UniqueDetailedTaskList.DuplicateDetailedTaskException dpe) {
+                throw new CommandException(MESSAGE_DUPLICATE_TASK);
+            }
+            model.updateFilteredListToShowAll();
+            return new CommandResult(String.format(MESSAGE_EDIT_TASK_SUCCESS, taskToEdit));
         }
-        model.updateFilteredListToShowAll();
-        commandSuccess = true;
-        undoHistory.push(this);
-        return new CommandResult(String.format(MESSAGE_EDIT_TASK_SUCCESS, taskToEdit));
     }
 
     /**
@@ -87,52 +120,28 @@ public class EditCommand extends Command implements Undoable {
         assert taskToEdit != null;
 
         Name updatedName = editTaskDescriptor.getName().orElseGet(taskToEdit::getName);
-        Optional<DateTime> updatedStartDateTime = taskToEdit.getStartDateTime();
-        Optional<DateTime> updatedEndDateTime = taskToEdit.getEndDateTime();
-        if (editTaskDescriptor.getStartDate().isPresent()) {
-            String timeNoChange = "";
-            if (updatedStartDateTime.isPresent()) {
-                timeNoChange = updatedStartDateTime.get().getTimeOnly();
-            }
-            DateTime tempStartDateTime = new DateTime(editTaskDescriptor.getStartDate().orElse("") + " "
-                                                                                + timeNoChange);
-            updatedStartDateTime = Optional.of(tempStartDateTime);
-        }
-        if (editTaskDescriptor.getEndDate().isPresent()) {
-            String timeNoChange = "";
-            if (updatedEndDateTime.isPresent()) {
-                timeNoChange = updatedEndDateTime.get().getTimeOnly();
-            }
-            DateTime tempEndDateTime = new DateTime(editTaskDescriptor.getEndDate().orElse("") + " " + timeNoChange);
-            updatedEndDateTime = Optional.of(tempEndDateTime);
-        }
-        if (editTaskDescriptor.getStartTime().isPresent()) {
-            String dateNoChange = "";
-            if (updatedStartDateTime.isPresent()) {
-                dateNoChange = updatedStartDateTime.get().getDateOnly();
-            }
-            DateTime tempStartDateTime = new DateTime(dateNoChange + " "
-                                                        + editTaskDescriptor.getStartTime().orElse(""));
-            updatedStartDateTime = Optional.of(tempStartDateTime);
-        }
-        if (editTaskDescriptor.getEndTime().isPresent()) {
-            String dateNoChange = "";
-            if (updatedEndDateTime.isPresent()) {
-                dateNoChange = updatedEndDateTime.get().getDateOnly();
-            }
-            DateTime tempEndDateTime = new DateTime(dateNoChange + " " + editTaskDescriptor.getEndTime().orElse(""));
-            updatedEndDateTime = Optional.of(tempEndDateTime);
-        }
-        boolean isTimed;
-        if (updatedStartDateTime.isPresent() || updatedEndDateTime.isPresent()) {
-            isTimed = true;
-        } else {
-            isTimed = false;
-        }
         UniqueTagList updatedTags = editTaskDescriptor.getTags().orElseGet(taskToEdit::getTags);
-        return new Task(updatedName, updatedStartDateTime, updatedEndDateTime,
-                            updatedTags, isTimed, true, false, RecurInterval.NONE);
+        return new Task(updatedName, updatedTags);
 
+    }
+
+    /**
+     * Creates and returns a {@code DetailedTask} with the details of {@code taskToEdit}
+     * edited with {@code editTaskDescriptor}.
+     */
+    private static DetailedTask createEditedTask(ReadOnlyDetailedTask taskToEdit,
+                                             EditTaskDescriptor editTaskDescriptor) {
+        assert taskToEdit != null;
+
+        DetailedTask temp = (DetailedTask) taskToEdit;
+        Name updatedName = editTaskDescriptor.getName().orElseGet(temp::getName);
+        Date updatedStartDate = editTaskDescriptor.getStartDate().orElseGet(temp::getStartDate);
+        Date updateEndDate = editTaskDescriptor.getEndDate().orElseGet(temp::getEndDate);
+        Time updateStartTime = editTaskDescriptor.getStartTime().orElseGet(temp::getStartTime);
+        Time updateEndTime = editTaskDescriptor.getEndTime().orElseGet(temp::getEndTime);
+        UniqueTagList updatedTags = editTaskDescriptor.getTags().orElseGet(taskToEdit::getTags);
+        return new DetailedTask(updatedName, updatedStartDate, updateEndDate, updateStartTime,
+                                    updateEndTime, updatedTags);
     }
 
     /**
@@ -141,10 +150,10 @@ public class EditCommand extends Command implements Undoable {
      */
     public static class EditTaskDescriptor {
         private Optional<Name> name = Optional.empty();
-        private Optional<String> startDate = Optional.empty();
-        private Optional<String> endDate = Optional.empty();
-        private Optional<String> startTime = Optional.empty();
-        private Optional<String> endTime = Optional.empty();
+        private Optional<Date> startDate = Optional.empty();
+        private Optional<Date> endDate = Optional.empty();
+        private Optional<Time> startTime = Optional.empty();
+        private Optional<Time> endTime = Optional.empty();
         private Optional<UniqueTagList> tags = Optional.empty();
 
         public EditTaskDescriptor() {}
@@ -175,39 +184,39 @@ public class EditCommand extends Command implements Undoable {
             return name;
         }
 
-        public void setStartDate(Optional<String> date) {
+        public void setStartDate(Optional<Date> date) {
             assert date != null;
             this.startDate = date;
         }
 
-        public Optional<String> getStartDate() {
+        public Optional<Date> getStartDate() {
             return startDate;
         }
 
-        public void setEndDate(Optional<String> date) {
+        public void setEndDate(Optional<Date> date) {
             assert date != null;
             this.endDate = date;
         }
 
-        public Optional<String> getEndDate() {
+        public Optional<Date> getEndDate() {
             return endDate;
         }
 
-        public void setStartTime(Optional<String> startTime) {
+        public void setStartTime(Optional<Time> startTime) {
             assert startTime != null;
             this.startTime = startTime;
         }
 
-        public Optional<String> getStartTime() {
+        public Optional<Time> getStartTime() {
             return startTime;
         }
 
-        public void setEndTime(Optional<String> endTime) {
+        public void setEndTime(Optional<Time> endTime) {
             assert endTime != null;
             this.endTime = endTime;
         }
 
-        public Optional<String> getEndTime() {
+        public Optional<Time> getEndTime() {
             return endTime;
         }
 
@@ -220,23 +229,4 @@ public class EditCommand extends Command implements Undoable {
             return tags;
         }
     }
-
-    //@@author A0150120H
-    @Override
-    public boolean isUndoable() {
-        return commandSuccess;
-    }
-
-    @Override
-    public String undo() throws CommandException {
-        // TODO Auto-generated method stub
-        try {
-            model.updateTask(taskToEdit, originalTask);
-            model.updateFilteredListToShowAll();
-            return String.format(MESSAGE_EDIT_TASK_SUCCESS, taskToEdit);
-        } catch (DuplicateTaskException e) {
-            throw new CommandException(MESSAGE_DUPLICATE_TASK);
-        }
-    }
-    //@@author
 }

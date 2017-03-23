@@ -15,13 +15,15 @@ import seedu.tache.commons.exceptions.IllegalValueException;
 import seedu.tache.commons.util.StringUtil;
 import seedu.tache.model.tag.Tag;
 import seedu.tache.model.tag.UniqueTagList;
+import seedu.tache.model.task.Date;
 import seedu.tache.model.task.Name;
+import seedu.tache.model.task.Time;
 
 /**
  * Contains utility methods used for parsing strings in the various *Parser classes
  */
 public class ParserUtil {
-    //@@author A0139925U
+
     private static final Pattern INDEX_ARGS_FORMAT = Pattern.compile("(?<targetIndex>.+)");
     private static final Pattern NAME_FORMAT = Pattern.compile("^\".+\"");
     private static final Pattern DATE_FORMAT = Pattern.compile("^[0-3]?[0-9]/[0-1]?[0-9]/"
@@ -34,7 +36,7 @@ public class ParserUtil {
 
     public static final int TYPE_TASK = 0;
     public static final int TYPE_DETAILED_TASK = 1;
-    //@@author
+
     /**
      * Returns the specified index in the {@code command} if it is a positive unsigned integer
      * Returns an {@code Optional.empty()} otherwise.
@@ -97,7 +99,7 @@ public class ParserUtil {
         }
         return new UniqueTagList(tagSet);
     }
-    //@@author A0139925U
+
     /**
      * Returns True if input is a valid date
      * Returns False otherwise.
@@ -113,7 +115,10 @@ public class ParserUtil {
      */
     public static boolean isValidTime(String input) {
         final Matcher matcher = TIME_FORMAT.matcher(input.trim());
-        return matcher.matches();
+        if (matcher.matches()) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -122,7 +127,10 @@ public class ParserUtil {
      */
     public static boolean isValidDuration(String input) {
         final Matcher matcher = DURATION_FORMAT.matcher(input.trim());
-        return matcher.matches();
+        if (matcher.matches()) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -131,9 +139,12 @@ public class ParserUtil {
      */
     public static boolean isValidName(String input) {
         final Matcher matcher = NAME_FORMAT.matcher(input.trim());
-        return matcher.matches();
+        if (matcher.matches()) {
+            return true;
+        }
+        return false;
     }
-    //@@author
+
     /**
      * Returns number of date parameters in input.
      */
@@ -157,7 +168,21 @@ public class ParserUtil {
             return false;
         }
     }
-    //@@author A0150120H
+
+    /**
+     * Returns data type based on the input
+     */
+    public static Object determineType(String input) throws IllegalValueException {
+        if (isValidDate(input)) {
+            return new Date(input);
+        } else if (isValidTime(input)) {
+            return new Time(input);
+        } else if (isValidName(input)) {
+            return new Name(input);
+        }
+        throw new IllegalValueException("Invalid Input");
+    }
+
     /**
      * Returns the first time String encountered
      */
@@ -185,8 +210,6 @@ public class ParserUtil {
         }
         throw new IllegalValueException("Invalid Input");
     }
-
-    //@@author A0139925U
     /**
      * Returns the corresponding integer value of the String entered
      */
