@@ -71,7 +71,7 @@ public class HotkeyManager {
     /**
      * Bind lucky draw notification trigger hotkey
      */
-    private void bindTriggerNotificationHotkey() {
+    private synchronized void bindTriggerNotificationHotkey() {
         hotkeyManager = Provider.getCurrentProvider(false);
         hotkeyManager.register(KeyStroke.getKeyStroke(LUCKY_DRAW_NOTIFICATION_COMBINATION), new HotKeyListener() {
             public void onHotKey(HotKey hotKey) {
