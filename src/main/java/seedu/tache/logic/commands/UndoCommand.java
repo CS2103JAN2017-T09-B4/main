@@ -1,5 +1,8 @@
 package seedu.tache.logic.commands;
 
+import java.io.IOException;
+
+import seedu.tache.commons.exceptions.DataConversionException;
 import seedu.tache.logic.commands.exceptions.CommandException;
 
 //@@author A0150120H
@@ -16,7 +19,7 @@ public class UndoCommand extends Command {
     public static final String MESSAGE_FAILURE = "Failed to undo: %s";
 
     @Override
-    public CommandResult execute() {
+    public CommandResult execute() throws DataConversionException, IOException {
         // TODO Auto-generated method stub
         if (undoHistory.isEmpty()) {
             return new CommandResult(MESSAGE_EMPTY_HISTORY);

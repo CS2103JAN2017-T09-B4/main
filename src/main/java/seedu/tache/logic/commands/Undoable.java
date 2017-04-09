@@ -1,5 +1,8 @@
 package seedu.tache.logic.commands;
 
+import java.io.IOException;
+
+import seedu.tache.commons.exceptions.DataConversionException;
 import seedu.tache.logic.commands.exceptions.CommandException;
 
 //@@author A0150120H
@@ -20,6 +23,8 @@ public interface Undoable {
      * Attempts to undo the command.
      * If the undo is successful, returns the CommandResult feedback string of the original command
      * @throws CommandException if the undo operation fails
+     * @throws IOException 
+     * @throws DataConversionException 
      */
-    public abstract String undo() throws CommandException;
+    public abstract String undo() throws CommandException, DataConversionException, IOException;
 }

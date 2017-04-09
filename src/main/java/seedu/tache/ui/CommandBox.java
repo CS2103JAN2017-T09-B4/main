@@ -1,5 +1,6 @@
 package seedu.tache.ui;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
@@ -18,6 +19,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Region;
 import seedu.tache.commons.core.LogsCenter;
 import seedu.tache.commons.events.ui.NewResultAvailableEvent;
+import seedu.tache.commons.exceptions.DataConversionException;
 import seedu.tache.commons.util.FxViewUtil;
 import seedu.tache.logic.Logic;
 import seedu.tache.logic.commands.CommandResult;
@@ -56,9 +58,11 @@ public class CommandBox extends UiPart<Region> {
     /**
      * Executes the user command and adds it to the list of previous commands for retrieval.
      * Handles command success as well as command failure.
+     * @throws IOException 
+     * @throws DataConversionException 
      */
     @FXML
-    private void handleCommandInputChanged() {
+    private void handleCommandInputChanged() throws DataConversionException, IOException {
         try {
             String userInput = commandTextField.getText();
             userInputs.add(userInput);

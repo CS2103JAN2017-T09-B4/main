@@ -8,7 +8,6 @@ import seedu.tache.commons.core.Config;
 import seedu.tache.commons.exceptions.DataConversionException;
 import seedu.tache.commons.exceptions.IllegalValueException;
 import seedu.tache.commons.util.ConfigUtil;
-import seedu.tache.commons.util.StringUtil;
 import seedu.tache.logic.commands.exceptions.CommandException;
 import seedu.tache.model.ReadOnlyTaskManager;
 import seedu.tache.model.util.SampleDataUtil;
@@ -42,7 +41,7 @@ public class LoadCommand extends Command implements Undoable {
     }
 
     @Override
-    public CommandResult execute() throws CommandException {
+    public CommandResult execute() throws CommandException, DataConversionException, IOException {
         assert storage != null;
         assert config != null;
         Optional<ReadOnlyTaskManager> taskManagerOptional;
@@ -50,21 +49,11 @@ public class LoadCommand extends Command implements Undoable {
         this.prevPath = storage.getTaskManagerFilePath();
         config.setTaskManagerFilePath(newPath);
         storage.setTaskManagerFilePath(newPath);
-        try {
-            ConfigUtil.saveConfig(config, Config.DEFAULT_CONFIG_FILE);
-        } catch (IOException e) {
-            return new CommandResult("Failed to save config file : " + StringUtil.getDetails(e));
-        }
-        try {
-            taskManagerOptional = storage.readTaskManager();
-            initialData = taskManagerOptional.orElseGet(SampleDataUtil::getSampleTaskManager);
-        } catch (DataConversionException e) {
-            return new CommandResult(String.format("Data file not in the correct format."
-                                                    + " Will be starting with an empty TaskManager."));
-        } catch (IOException e) {
-            return new CommandResult(String.format("Problem while reading from the file."
-                                                    + " Will be starting with an empty TaskManager."));
-        }
+        ConfigUtil.saveConfig(config, Config.DEFAULT_CONFIG_FILE);
+        
+        taskManagerOptional = storage.readTaskManager();
+        initialData = taskManagerOptional.orElseGet(SampleDataUtil::getSampleTaskManager);
+
         model.resetData(initialData);
         commandSuccess = true;
         undoHistory.push(this);
@@ -77,7 +66,7 @@ public class LoadCommand extends Command implements Undoable {
     }
 
     @Override
-    public String undo() throws CommandException {
+    public String undo() throws CommandException, DataConversionException, IOException {
         try {
             this.newPath = prevPath;
             this.execute();
