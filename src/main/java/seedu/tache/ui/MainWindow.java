@@ -16,7 +16,6 @@ import seedu.tache.commons.events.ui.ExitAppRequestEvent;
 import seedu.tache.commons.util.FxViewUtil;
 import seedu.tache.logic.Logic;
 import seedu.tache.model.UserPrefs;
-import seedu.tache.model.task.ReadOnlyTask;
 
 /**
  * The Main Window. Provides the basic application layout containing
@@ -33,13 +32,12 @@ public class MainWindow extends UiPart<Region> {
     private Logic logic;
 
     // Independent Ui parts residing in this Ui container
-    private BrowserPanel browserPanel;
+    private CalendarPanel calendarPanel;
     private TaskListPanel taskListPanel;
-    private TaskListPanel detailedTaskListPanel;
     private Config config;
 
     @FXML
-    private AnchorPane browserPlaceholder;
+    private AnchorPane calendarPlaceholder;
 
     @FXML
     private AnchorPane commandBoxPlaceholder;
@@ -47,11 +45,16 @@ public class MainWindow extends UiPart<Region> {
     @FXML
     private MenuItem helpMenuItem;
 
+    //@@author A0142255M
     @FXML
-    private AnchorPane taskListPanelPlaceholder;
+    private AnchorPane taskListTypePlaceholder;
 
     @FXML
-    private AnchorPane detailedTaskListPanelPlaceholder;
+    private AnchorPane taskCountPlaceholder;
+    //@@author
+
+    @FXML
+    private AnchorPane taskListPanelPlaceholder;
 
     @FXML
     private AnchorPane resultDisplayPlaceholder;
@@ -116,15 +119,24 @@ public class MainWindow extends UiPart<Region> {
         });
     }
 
+    //@@author A0142255M
+    /**
+     * Initializes all UI components using information from logic and config.
+     */
     void fillInnerParts() {
-        browserPanel = new BrowserPanel(browserPlaceholder);
+        calendarPanel = new CalendarPanel(getCalendarPlaceholder(), logic.getFullTaskList());
         taskListPanel = new TaskListPanel(getTaskListPlaceholder(), logic.getFilteredTaskList());
-        detailedTaskListPanel = new TaskListPanel(logic.getFilteredDetailedTaskList(),
-                                                  getDetailedTaskListPlaceholder());
+        new TaskListType(getTaskListTypePlaceholder(), logic.getFilteredTaskListType());
+        new TaskCount(getTaskCountPlaceholder(), logic);
         new ResultDisplay(getResultDisplayPlaceholder());
         new StatusBarFooter(getStatusbarPlaceholder(), config.getTaskManagerFilePath());
         new CommandBox(getCommandBoxPlaceholder(), logic);
     }
+
+    private AnchorPane getCalendarPlaceholder() {
+        return calendarPlaceholder;
+    }
+    //@@author
 
     private AnchorPane getCommandBoxPlaceholder() {
         return commandBoxPlaceholder;
@@ -138,12 +150,18 @@ public class MainWindow extends UiPart<Region> {
         return resultDisplayPlaceholder;
     }
 
-    private AnchorPane getTaskListPlaceholder() {
-        return taskListPanelPlaceholder;
+    //@@author A0142255M
+    private AnchorPane getTaskCountPlaceholder() {
+        return taskCountPlaceholder;
     }
 
-    private AnchorPane getDetailedTaskListPlaceholder() {
-        return detailedTaskListPanelPlaceholder;
+    private AnchorPane getTaskListTypePlaceholder() {
+        return taskListTypePlaceholder;
+    }
+    //@@author
+
+    private AnchorPane getTaskListPlaceholder() {
+        return taskListPanelPlaceholder;
     }
 
     void hide() {
@@ -209,16 +227,13 @@ public class MainWindow extends UiPart<Region> {
         return this.taskListPanel;
     }
 
-    public TaskListPanel getDetailedTaskListPanel() {
-        return this.detailedTaskListPanel;
-    }
-
-    void loadTaskPage(ReadOnlyTask task) {
-        browserPanel.loadTaskPage(task);
+    //@@author A0139925U
+    public CalendarPanel getCalendarPanel() {
+        return this.calendarPanel;
     }
 
     void releaseResources() {
-        browserPanel.freeResources();
+        calendarPanel.freeResources();
     }
 
 }

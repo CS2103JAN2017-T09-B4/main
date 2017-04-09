@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 import seedu.tache.logic.commands.AddCommand;
 import seedu.tache.logic.commands.ClearCommand;
 import seedu.tache.logic.commands.Command;
+import seedu.tache.logic.commands.CompleteCommand;
 import seedu.tache.logic.commands.DeleteCommand;
 import seedu.tache.logic.commands.EditCommand;
 import seedu.tache.logic.commands.ExitCommand;
@@ -16,7 +17,13 @@ import seedu.tache.logic.commands.FindCommand;
 import seedu.tache.logic.commands.HelpCommand;
 import seedu.tache.logic.commands.IncorrectCommand;
 import seedu.tache.logic.commands.ListCommand;
+import seedu.tache.logic.commands.LoadCommand;
+import seedu.tache.logic.commands.NextCommand;
+import seedu.tache.logic.commands.PrevCommand;
+import seedu.tache.logic.commands.SaveCommand;
 import seedu.tache.logic.commands.SelectCommand;
+import seedu.tache.logic.commands.UndoCommand;
+import seedu.tache.logic.commands.ViewCommand;
 
 /**
  * Parses user input.
@@ -45,31 +52,64 @@ public class Parser {
         switch (commandWord) {
 
         case AddCommand.COMMAND_WORD:
+        case AddCommand.SHORT_COMMAND_WORD:
             return new AddCommandParser().parse(arguments);
 
-        case EditCommand.COMMAND_WORD:
-            return new EditCommandParser().parse(arguments);
-
-        case SelectCommand.COMMAND_WORD:
-            return new SelectCommandParser().parse(arguments);
-
-        case DeleteCommand.COMMAND_WORD:
-            return new DeleteCommandParser().parse(arguments);
+        case CompleteCommand.COMMAND_WORD:
+        case CompleteCommand.SHORT_COMMAND_WORD:
+            return new CompleteCommandParser().parse(arguments);
 
         case ClearCommand.COMMAND_WORD:
             return new ClearCommand();
 
-        case FindCommand.COMMAND_WORD:
-            return new FindCommandParser().parse(arguments);
+        case DeleteCommand.COMMAND_WORD:
+        case DeleteCommand.SHORT_COMMAND_WORD:
+            return new DeleteCommandParser().parse(arguments);
 
-        case ListCommand.COMMAND_WORD:
-            return new ListCommand();
+        case EditCommand.COMMAND_WORD:
+        case EditCommand.SHORT_COMMAND_WORD:
+            return new EditCommandParser().parse(arguments);
 
         case ExitCommand.COMMAND_WORD:
             return new ExitCommand();
 
+        case FindCommand.COMMAND_WORD:
+        case FindCommand.SHORT_COMMAND_WORD:
+            return new FindCommandParser().parse(arguments);
+
         case HelpCommand.COMMAND_WORD:
-            return new HelpCommand();
+        case HelpCommand.SHORT_COMMAND_WORD:
+            return new HelpCommandParser().parse(arguments);
+
+        case ListCommand.COMMAND_WORD:
+        case ListCommand.SHORT_COMMAND_WORD:
+            return new ListCommandParser().parse(arguments);
+
+        case LoadCommand.COMMAND_WORD:
+            return new LoadCommandParser().parse(arguments);
+
+        case SaveCommand.COMMAND_WORD:
+            return new SaveCommandParser().parse(arguments);
+
+        case SelectCommand.COMMAND_WORD:
+        case SelectCommand.SHORT_COMMAND_WORD:
+            return new SelectCommandParser().parse(arguments);
+
+        case UndoCommand.COMMAND_WORD:
+        case UndoCommand.SHORT_COMMAND_WORD:
+            return new UndoCommand();
+
+        case PrevCommand.COMMAND_WORD:
+        case PrevCommand.SHORT_COMMAND_WORD:
+            return new PrevCommand();
+
+        case NextCommand.COMMAND_WORD:
+        case NextCommand.SHORT_COMMAND_WORD:
+            return new NextCommand();
+
+        case ViewCommand.COMMAND_WORD:
+        case ViewCommand.SHORT_COMMAND_WORD:
+            return new ViewCommandParser().parse(arguments);
 
         default:
             return new IncorrectCommand(MESSAGE_UNKNOWN_COMMAND);

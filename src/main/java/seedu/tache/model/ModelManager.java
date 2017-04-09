@@ -1,21 +1,30 @@
 package seedu.tache.model;
 
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import edu.emory.mathcs.backport.java.util.Collections;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import seedu.tache.commons.core.ComponentManager;
 import seedu.tache.commons.core.LogsCenter;
 import seedu.tache.commons.core.UnmodifiableObservableList;
 import seedu.tache.commons.events.model.TaskManagerChangedEvent;
+import seedu.tache.commons.events.ui.FilteredTaskListUpdatedEvent;
+import seedu.tache.commons.events.ui.PopulateRecurringGhostTaskEvent;
+import seedu.tache.commons.events.ui.TaskListTypeChangedEvent;
+import seedu.tache.commons.events.ui.TaskPanelConnectionChangedEvent;
 import seedu.tache.commons.util.CollectionUtil;
 import seedu.tache.commons.util.StringUtil;
-import seedu.tache.model.task.DetailedTask;
-import seedu.tache.model.task.ReadOnlyDetailedTask;
+import seedu.tache.model.tag.Tag;
+import seedu.tache.model.task.DateTime;
 import seedu.tache.model.task.ReadOnlyTask;
 import seedu.tache.model.task.Task;
-import seedu.tache.model.task.UniqueDetailedTaskList.DetailedTaskNotFoundException;
-import seedu.tache.model.task.UniqueDetailedTaskList.DuplicateDetailedTaskException;
 import seedu.tache.model.task.UniqueTaskList;
 import seedu.tache.model.task.UniqueTaskList.DuplicateTaskException;
 import seedu.tache.model.task.UniqueTaskList.TaskNotFoundException;
@@ -25,13 +34,30 @@ import seedu.tache.model.task.UniqueTaskList.TaskNotFoundException;
  * All changes to any model should be synchronized.
  */
 public class ModelManager extends ComponentManager implements Model {
+    //@@author A0139925U
     public static final int MARGIN_OF_ERROR = 1;
-
+    //@@author A0142255M
+    public static final String TASK_LIST_TYPE_ALL = "All Tasks";
+    public static final String TASK_LIST_TYPE_COMPLETED = "Completed Tasks";
+    public static final String TASK_LIST_TYPE_UNCOMPLETED = "Uncompleted Tasks";
+    public static final String TASK_LIST_TYPE_TIMED = "Timed Tasks";
+    public static final String TASK_LIST_TYPE_FLOATING = "Floating Tasks";
+    //@@author A0139925U
+    public static final String TASK_LIST_TYPE_FOUND = "Found Tasks";
+    //@@author A0139961U
+    public static final String TASK_LIST_TYPE_DUE_TODAY = "Tasks Due Today";
+    public static final String TASK_LIST_TYPE_DUE_THIS_WEEK = "Tasks Due This Week";
+    public static final String TASK_LIST_TYPE_OVERDUE = "Overdue Tasks";
+    //@@author
     private static final Logger logger = LogsCenter.getLogger(ModelManager.class);
-
+    //@@author A0139925U
     private final TaskManager taskManager;
     private final FilteredList<ReadOnlyTask> filteredTasks;
-    private final FilteredList<ReadOnlyDetailedTask> filteredDetailedTasks;
+
+    private Set<String> latestKeywords;
+    //@@author A0142255M
+    private String filteredTaskListType = TASK_LIST_TYPE_ALL;
+    //@@author
 
     /**
      * Initializes a ModelManager with the given taskManager and userPrefs.
@@ -44,28 +70,39 @@ public class ModelManager extends ComponentManager implements Model {
 
         this.taskManager = new TaskManager(taskManager);
         filteredTasks = new FilteredList<>(this.taskManager.getTaskList());
-        filteredDetailedTasks = new FilteredList<>(this.taskManager.getDetailedTaskList());
     }
 
     public ModelManager() {
         this(new TaskManager(), new UserPrefs());
     }
 
+    //@@author A0142255M
     @Override
     public void resetData(ReadOnlyTaskManager newData) {
+        assert newData != null;
         taskManager.resetData(newData);
+        updateFilteredListToShowAll();
+        updateFilteredTaskListType(TASK_LIST_TYPE_ALL);
         indicateTaskManagerChanged();
     }
+    //@@author
 
     @Override
     public ReadOnlyTaskManager getTaskManager() {
         return taskManager;
     }
 
-    /** Raises an event to indicate the model has changed */
+    //@@author A0142255M
+    /**
+     * Raises events to indicate that the model has changed.
+     */
     private void indicateTaskManagerChanged() {
         raise(new TaskManagerChangedEvent(taskManager));
+        raise(new FilteredTaskListUpdatedEvent(getFilteredTaskList()));
+        raise(new PopulateRecurringGhostTaskEvent(getAllUncompletedRecurringGhostTasks(),
+                                getAllCompletedRecurringGhostTasks()));
     }
+    //@@author
 
     @Override
     public synchronized void deleteTask(ReadOnlyTask target) throws TaskNotFoundException {
@@ -73,88 +110,146 @@ public class ModelManager extends ComponentManager implements Model {
         indicateTaskManagerChanged();
     }
 
+    //@@author A0142255M
     @Override
     public synchronized void addTask(Task task) throws DuplicateTaskException {
+        assert task != null;
         taskManager.addTask(task);
-        updateFilteredListToShowAll();
         indicateTaskManagerChanged();
     }
 
+    //@@author A0150120H
     @Override
-    public void deleteDetailedTask(ReadOnlyDetailedTask target) throws DetailedTaskNotFoundException {
-        taskManager.removeDetailedTask(target);
+    public synchronized void addTask(int index, Task task) throws DuplicateTaskException {
+        taskManager.addTask(index, task);
         indicateTaskManagerChanged();
     }
 
-    @Override
-    public void addDetailedTask(DetailedTask detailedTask) throws DuplicateDetailedTaskException {
-        taskManager.addDetailedTask(detailedTask);
-        updateFilteredListToShowAll();
+    public List<ReadOnlyTask> updateMultipleTasks(ReadOnlyTask[] tasksToUpdate, ReadOnlyTask[] editedTasks)
+            throws UniqueTaskList.DuplicateTaskException {
+        assert tasksToUpdate.length == editedTasks.length;
+        ArrayList<ReadOnlyTask> updatedTasks = new ArrayList<ReadOnlyTask>();
+        for (int i = 0; i < tasksToUpdate.length; i++) {
+            taskManager.updateTask(tasksToUpdate[i], editedTasks[i]);
+            updatedTasks.add(tasksToUpdate[i]);
+        }
         indicateTaskManagerChanged();
+        return updatedTasks;
     }
+    //@@author
 
     @Override
-    public void updateTask(int filteredTaskListIndex, ReadOnlyTask editedTask)
+    public void updateTask(ReadOnlyTask taskToUpdate, ReadOnlyTask editedTask)
             throws UniqueTaskList.DuplicateTaskException {
         assert editedTask != null;
-
-        int taskManagerIndex = filteredTasks.getSourceIndex(filteredTaskListIndex);
-        taskManager.updateTask(taskManagerIndex, editedTask);
+        taskManager.updateTask(taskToUpdate, editedTask);
         indicateTaskManagerChanged();
-    }
-
-    @Override
-    public void updateDetailedTask(int filteredDetailedTaskListIndex, ReadOnlyDetailedTask editedDetailedTask)
-            throws DuplicateDetailedTaskException {
-        assert editedDetailedTask != null;
-
-        int taskManagerIndex = filteredDetailedTasks.getSourceIndex(filteredDetailedTaskListIndex);
-        taskManager.updateDetailedTask(taskManagerIndex, editedDetailedTask);
-        indicateTaskManagerChanged();
-
     }
 
     //=========== Filtered Task List Accessors =============================================================
-
+    //@@author A0139925U
     @Override
     public UnmodifiableObservableList<ReadOnlyTask> getFilteredTaskList() {
-        return new UnmodifiableObservableList<>(filteredTasks);
+        ObservableList<ReadOnlyTask> filteredTasksWithRecurringTasks = populateRecurringDatesAsTask();
+        raise(new TaskPanelConnectionChangedEvent(filteredTasksWithRecurringTasks));
+        return new UnmodifiableObservableList<>(filteredTasksWithRecurringTasks);
     }
 
-    @Override
-    public UnmodifiableObservableList<ReadOnlyDetailedTask> getFilteredDetailedTaskList() {
-        return new UnmodifiableObservableList<>(filteredDetailedTasks);
-    }
-
+    //@@author A0142255M
     @Override
     public void updateFilteredListToShowAll() {
         filteredTasks.setPredicate(null);
-        filteredDetailedTasks.setPredicate(null);
+        updateFilteredTaskListType(TASK_LIST_TYPE_ALL);
+        raise(new FilteredTaskListUpdatedEvent(getFilteredTaskList()));
+    }
+
+    //@@author A0139925U
+    @Override
+    public void updateFilteredListToShowUncompleted() {
+        updateFilteredTaskListType(TASK_LIST_TYPE_UNCOMPLETED);
+        updateFilteredTaskList(new PredicateExpression(new ActiveQualifier(true)));
     }
 
     @Override
+    public void updateFilteredListToShowCompleted() {
+        updateFilteredTaskListType(TASK_LIST_TYPE_COMPLETED);
+        updateFilteredTaskList(new PredicateExpression(new ActiveQualifier(false)));
+    }
+
+    //@@author A0142255M
+    @Override
+    public void updateFilteredListToShowTimed() {
+        updateFilteredTaskListType(TASK_LIST_TYPE_TIMED);
+        updateFilteredTaskList(new PredicateExpression(new ActiveTimedQualifier(true)));
+    }
+
+    @Override
+    public void updateFilteredListToShowFloating() {
+        updateFilteredTaskListType(TASK_LIST_TYPE_FLOATING);
+        updateFilteredTaskList(new PredicateExpression(new ActiveTimedQualifier(false)));
+    }
+
+    //@@author A0139961U
+    @Override
+    public void updateFilteredListToShowDueToday() {
+        updateFilteredTaskListType(TASK_LIST_TYPE_DUE_TODAY);
+        updateFilteredTaskList(new PredicateExpression(new DueTodayQualifier(true)));
+    }
+
+    public void updateFilteredListToShowDueThisWeek() {
+        updateFilteredTaskListType(TASK_LIST_TYPE_DUE_THIS_WEEK);
+        updateFilteredTaskList(new PredicateExpression(new DueThisWeekQualifier(true)));
+    }
+
+    public void updateFilteredListToShowOverdueTasks() {
+        updateFilteredTaskListType(TASK_LIST_TYPE_OVERDUE);
+        updateFilteredTaskList(new PredicateExpression(new OverdueQualifier()));
+    }
+
+    //@@author A0142255M
+    /**
+     * Provides functionality for find command and raises TaskListTypeChangedEvent to update UI.
+     * Set<String> is converted to ArrayList<String> so that String can be retrieved.
+     */
+    @Override
     public void updateFilteredTaskList(Set<String> keywords) {
-        updateFilteredTaskList(new PredicateExpression(new NameQualifier(keywords)));
+        assert keywords != null;
+        updateFilteredTaskList(new PredicateExpression(new MultiQualifier(keywords)));
+        updateFilteredTaskListType(TASK_LIST_TYPE_FOUND);
+        retainLatestKeywords(keywords);
+        raise(new TaskListTypeChangedEvent("Find \"" + StringUtil.generateStringFromKeywords(keywords) + "\""));
     }
 
     private void updateFilteredTaskList(Expression expression) {
+        assert expression != null;
         filteredTasks.setPredicate(expression::satisfies);
+        raise(new FilteredTaskListUpdatedEvent(getFilteredTaskList()));
     }
 
     @Override
-    public void updateFilteredDetailedTaskList(Set<String> keywords) {
-        updateFilteredDetailedTaskList(new PredicateExpression(new MultiQualifier(keywords)));
+    public String getFilteredTaskListType() {
+        return filteredTaskListType;
     }
 
-    private void updateFilteredDetailedTaskList(Expression expression) {
-        filteredDetailedTasks.setPredicate(expression::satisfies);
+    private void updateFilteredTaskListType(String newFilteredTaskListType) {
+        assert newFilteredTaskListType != null;
+        assert !newFilteredTaskListType.equals("");
+        if (!filteredTaskListType.equals(newFilteredTaskListType)) {
+            raise(new TaskListTypeChangedEvent(newFilteredTaskListType));
+        }
+        filteredTaskListType = newFilteredTaskListType;
     }
+
+    //@@author A0139925U
+    private void retainLatestKeywords(Set<String> keywords) {
+        latestKeywords = keywords;
+    }
+    //@@author
 
     //========== Inner classes/interfaces/methods used for filtering =================================================
 
     interface Expression {
         boolean satisfies(ReadOnlyTask task);
-        boolean satisfies(ReadOnlyDetailedTask task);
         String toString();
     }
 
@@ -172,11 +267,6 @@ public class ModelManager extends ComponentManager implements Model {
         }
 
         @Override
-        public boolean satisfies(ReadOnlyDetailedTask detailedTask) {
-            return qualifier.run(detailedTask);
-        }
-
-        @Override
         public String toString() {
             return qualifier.toString();
         }
@@ -184,10 +274,9 @@ public class ModelManager extends ComponentManager implements Model {
 
     interface Qualifier {
         boolean run(ReadOnlyTask task);
-        boolean run(ReadOnlyDetailedTask task);
         String toString();
     }
-
+    //@@author A0139925U
     private class NameQualifier implements Qualifier {
         private Set<String> nameKeyWords;
 
@@ -199,10 +288,11 @@ public class ModelManager extends ComponentManager implements Model {
         public boolean run(ReadOnlyTask task) {
             String[] nameElements = task.getName().fullName.split(" ");
             boolean partialMatch = false;
-            String trimmedNameKeyWords = nameKeyWords.toString()
+            //Remove square brackets
+            String trimmedNameKeywords = nameKeyWords.toString()
                                          .substring(1, nameKeyWords.toString().length() - 1).toLowerCase();
             for (int i = 0; i < nameElements.length; i++) {
-                if (computeLevenshteinDistance(trimmedNameKeyWords, nameElements[i].toLowerCase()) <= MARGIN_OF_ERROR) {
+                if (computeLevenshteinDistance(trimmedNameKeywords, nameElements[i].toLowerCase()) <= MARGIN_OF_ERROR) {
                     partialMatch = true;
                     break;
                 }
@@ -215,90 +305,155 @@ public class ModelManager extends ComponentManager implements Model {
         }
 
         @Override
-        public boolean run(ReadOnlyDetailedTask detailedTask) {
-            String[] nameElements = detailedTask.getName().fullName.split(" ");
-            boolean partialMatch = false;
-            String trimmedNameKeyWords = nameKeyWords.toString()
-                                         .substring(1, nameKeyWords.toString().length() - 1).toLowerCase();
-            for (int i = 0; i < nameElements.length; i++) {
-                if (computeLevenshteinDistance(trimmedNameKeyWords, nameElements[i].toLowerCase()) <= MARGIN_OF_ERROR) {
-                    partialMatch = true;
-                    break;
-                }
-            }
-            return nameKeyWords.stream()
-                    .filter(keyword -> StringUtil.containsWordIgnoreCase(detailedTask.getName().fullName, keyword))
-                    .findAny()
-                    .isPresent()
-                    || partialMatch;
-        }
-
-        @Override
         public String toString() {
             return "name=" + String.join(", ", nameKeyWords);
         }
     }
+    //@@author
+    //@@author A0142255M
+    private class TimedQualifier implements Qualifier {
+        private boolean isTimed;
 
-    private class DateQualifier implements Qualifier {
-        private Set<String> dateKeyWords;
-
-        DateQualifier(Set<String> dateKeyWords) {
-            this.dateKeyWords = dateKeyWords;
+        TimedQualifier(boolean isTimed) {
+            this.isTimed = isTimed;
         }
 
         @Override
         public boolean run(ReadOnlyTask task) {
-            return false;
-        }
-
-        @Override
-        public boolean run(ReadOnlyDetailedTask detailedTask) {
-            return dateKeyWords.stream()
-                    .filter(keyword -> StringUtil.containsWordIgnoreCase(detailedTask.getStartDate().toString(),
-                            keyword))
-                    .findAny()
-                    .isPresent()
-                    || dateKeyWords.stream()
-                    .filter(keyword -> StringUtil.containsWordIgnoreCase(detailedTask.getEndDate().toString(), keyword))
-                    .findAny()
-                    .isPresent();
+            assert task != null;
+            if (isTimed) {
+                return task.getTimedStatus();
+            } else {
+                return !task.getTimedStatus();
+            }
         }
 
         @Override
         public String toString() {
-            return "date=" + String.join(", ", dateKeyWords);
+            return "timed=" + isTimed;
         }
-
     }
 
-    private class TimeQualifier implements Qualifier {
-        private Set<String> timeKeyWords;
+    //@@author A0139925U
+    private class ActiveQualifier implements Qualifier {
+        private boolean isActive;
 
-        TimeQualifier(Set<String> timeKeyWords) {
-            this.timeKeyWords = timeKeyWords;
+        ActiveQualifier(boolean isActive) {
+            this.isActive = isActive;
         }
 
         @Override
         public boolean run(ReadOnlyTask task) {
-            return false;
-        }
-
-        @Override
-        public boolean run(ReadOnlyDetailedTask detailedTask) {
-            return timeKeyWords.stream()
-                    .filter(keyword -> StringUtil.containsWordIgnoreCase(detailedTask.getStartTime().toString(),
-                            keyword))
-                    .findAny()
-                    .isPresent()
-                    || timeKeyWords.stream()
-                    .filter(keyword -> StringUtil.containsWordIgnoreCase(detailedTask.getEndTime().toString(), keyword))
-                    .findAny()
-                    .isPresent();
+            if (isActive) {
+                return task.getActiveStatus();
+            } else {
+                return !task.getActiveStatus();
+            }
         }
 
         @Override
         public String toString() {
-            return "time=" + String.join(", ", timeKeyWords);
+            return "active=" + isActive;
+        }
+    }
+
+    //@@author A0139961U
+    private class DueTodayQualifier implements Qualifier {
+        private boolean isDueToday;
+
+        DueTodayQualifier(boolean isDueToday) {
+            this.isDueToday = isDueToday;
+        }
+
+        @Override
+        public boolean run(ReadOnlyTask task) {
+            if (task.getEndDateTime().isPresent() && isDueToday) {
+                if (task.getStartDateTime().isPresent()) {
+                    return task.isWithinDate(DateTime.removeTime(new Date()));
+                }
+                return task.getEndDateTime().get().isToday();
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "dueToday=true";
+        }
+    }
+
+    private class DueThisWeekQualifier implements Qualifier {
+        private boolean isDueThisWeek;
+
+        DueThisWeekQualifier(boolean isDueThisWeek) {
+            this.isDueThisWeek = isDueThisWeek;
+        }
+
+        @Override
+        public boolean run(ReadOnlyTask task) {
+            if (task.getEndDateTime().isPresent() && isDueThisWeek) {
+                return task.getEndDateTime().get().isThisWeek();
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "dueThisWeek=true";
+        }
+    }
+
+    private class OverdueQualifier implements Qualifier {
+
+        @Override
+        public boolean run(ReadOnlyTask task) {
+            if (task.getEndDateTime().isPresent() && task.getActiveStatus()) {
+                return task.getEndDateTime().get().hasPassed();
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "dueThisWeek=true";
+        }
+    }
+
+    //@@author A0139925U
+    private class DateTimeQualifier implements Qualifier {
+        private Set<String> dateTimeKeyWords;
+
+        DateTimeQualifier(Set<String> dateTimeKeyWords) {
+            this.dateTimeKeyWords = dateTimeKeyWords;
+        }
+
+        @Override
+        public boolean run(ReadOnlyTask task) {
+            if (task.getStartDateTime().isPresent()) {
+                for (int i = 0; i < dateTimeKeyWords.size(); i++) {
+                    if (dateTimeKeyWords.toArray()[i].equals(task.getStartDateTime().get().getDateOnly()) ||
+                                dateTimeKeyWords.toArray()[i].equals(task.getStartDateTime().get().getTimeOnly())) {
+                        return true;
+                    }
+                }
+            }
+            if (task.getEndDateTime().isPresent()) {
+                for (int i = 0; i < dateTimeKeyWords.size(); i++) {
+                    if (dateTimeKeyWords.toArray()[i].equals(task.getEndDateTime().get().getDateOnly()) ||
+                                dateTimeKeyWords.toArray()[i].equals(task.getEndDateTime().get().getTimeOnly())) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return "datetime=" + String.join(", ", dateTimeKeyWords);
         }
 
     }
@@ -306,30 +461,81 @@ public class ModelManager extends ComponentManager implements Model {
     private class MultiQualifier implements Qualifier {
         private Set<String> multiKeyWords;
         private NameQualifier nameQualifier;
-        private DateQualifier dateQualifier;
-        private TimeQualifier timeQualifier;
+        private DateTimeQualifier dateTimeQualifier;
+        private ActiveQualifier activeQualifier;
+        private TagQualifier tagQualifier;
 
         MultiQualifier(Set<String> multiKeyWords) {
             this.multiKeyWords = multiKeyWords;
             nameQualifier = new NameQualifier(multiKeyWords);
-            dateQualifier = new DateQualifier(multiKeyWords);
-            timeQualifier = new TimeQualifier(multiKeyWords);
+            dateTimeQualifier = new DateTimeQualifier(multiKeyWords);
+            activeQualifier = new ActiveQualifier(true);
+            tagQualifier = new TagQualifier(multiKeyWords);
         }
 
         @Override
         public boolean run(ReadOnlyTask task) {
-            return false;
-        }
-
-        @Override
-        public boolean run(ReadOnlyDetailedTask detailedTask) {
-            return nameQualifier.run(detailedTask) || dateQualifier.run(detailedTask)
-                                     || timeQualifier.run(detailedTask);
+            return (nameQualifier.run(task) || dateTimeQualifier.run(task)
+                        || tagQualifier.run(task)) && activeQualifier.run(task);
         }
 
         @Override
         public String toString() {
             return "multi=" + String.join(", ", multiKeyWords);
+        }
+
+    }
+
+    private class TagQualifier implements Qualifier {
+        private Set<String> tagKeywords;
+
+        TagQualifier(Set<String> tagKeywords) {
+            this.tagKeywords = tagKeywords;
+        }
+
+        @Override
+        public boolean run(ReadOnlyTask task) {
+            if (task.getTags().toSet().size() != 0) {
+                Set<Tag> tagElements = (Set<Tag>) task.getTags().toSet();
+                boolean validMatch = false;
+                //Remove square brackets
+                String trimmedTagKeywords = tagKeywords.toString()
+                                             .substring(1, tagKeywords.toString().length() - 1).toLowerCase();
+                for (Tag tag: tagElements) {
+                    if (computeLevenshteinDistance(trimmedTagKeywords, tag.tagName.toLowerCase())
+                                    <= MARGIN_OF_ERROR) {
+                        validMatch = true;
+                        break;
+                    }
+                }
+                return validMatch;
+            }
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return "tag=" + String.join(", ", tagKeywords);
+        }
+    }
+
+    private class ActiveTimedQualifier implements Qualifier {
+        private TimedQualifier timedQualifier;
+        private ActiveQualifier activeQualifier;
+
+        ActiveTimedQualifier(boolean isTimed) {
+            timedQualifier = new TimedQualifier(isTimed);
+            activeQualifier = new ActiveQualifier(true);
+        }
+
+        @Override
+        public boolean run(ReadOnlyTask task) {
+            return timedQualifier.run(task) && activeQualifier.run(task);
+        }
+
+        @Override
+        public String toString() {
+            return "activetimed";
         }
 
     }
@@ -358,6 +564,74 @@ public class ModelManager extends ComponentManager implements Model {
 
     private int minimum(int a, int b, int c) {
         return Math.min(Math.min(a, b), c);
+    }
+
+    private ObservableList<ReadOnlyTask> populateRecurringDatesAsTask() {
+        List<ReadOnlyTask> concatenated = new ArrayList<>();
+        for (int i = 0; i < filteredTasks.size(); i++) {
+            if (filteredTasks.get(i).getRecurState().isRecurring()) {
+                if (filteredTaskListType.equals(TASK_LIST_TYPE_DUE_TODAY)) {
+                    Collections.addAll(concatenated, filteredTasks.get(i)
+                                                .getUncompletedRecurList(new Date()).toArray());
+                } else if (filteredTaskListType.equals(TASK_LIST_TYPE_DUE_THIS_WEEK)) {
+                    Calendar dateThisWeek = Calendar.getInstance();
+                    dateThisWeek.setTime(new Date());
+                    dateThisWeek.add(Calendar.WEEK_OF_YEAR, 1);
+                    Collections.addAll(concatenated, filteredTasks.get(i)
+                                                .getUncompletedRecurList(dateThisWeek.getTime()).toArray());
+                } else {
+                    Collections.addAll(concatenated, filteredTasks.get(i).getUncompletedRecurList().toArray());
+                }
+            }
+        }
+        if (filteredTaskListType.equals(TASK_LIST_TYPE_COMPLETED)) {
+            for (int i = 0; i < taskManager.getTaskList().size(); i++) {
+                if (taskManager.getTaskList().get(i).getRecurState().isRecurring()) {
+                    if (taskManager.getTaskList().get(i).getActiveStatus()) {
+                        Collections.addAll(concatenated, taskManager.getTaskList().get(i)
+                                                .getCompletedRecurList().toArray());
+                    } else {
+                        Collections.addAll(concatenated, taskManager.getTaskList().get(i)
+                                .getCompletedRecurList().toArray());
+                    }
+                }
+            }
+        }
+        Collections.addAll(concatenated, filteredTasks.toArray());
+        ObservableList<ReadOnlyTask> concatenatedList = FXCollections.observableList(concatenated);
+        concatenatedList.sort(ReadOnlyTask.READONLYTASK_DATE_COMPARATOR);
+        return concatenatedList;
+    }
+
+    public ObservableList<ReadOnlyTask> getAllUncompletedRecurringGhostTasks() {
+        List<ReadOnlyTask> concatenated = new ArrayList<>();
+        for (int i = 0; i < taskManager.getTaskList().size(); i++) {
+            if (taskManager.getTaskList().get(i).getRecurState().isRecurring()) {
+                Collections.addAll(concatenated, taskManager.getTaskList().get(i)
+                                            .getUncompletedRecurList().toArray());
+            }
+        }
+        ObservableList<ReadOnlyTask> concatenatedList = FXCollections.observableList(concatenated);
+        concatenatedList.sort(ReadOnlyTask.READONLYTASK_DATE_COMPARATOR);
+        return concatenatedList;
+    }
+
+    public ObservableList<ReadOnlyTask> getAllCompletedRecurringGhostTasks() {
+        List<ReadOnlyTask> concatenated = new ArrayList<>();
+        for (int i = 0; i < taskManager.getTaskList().size(); i++) {
+            if (taskManager.getTaskList().get(i).getRecurState().isRecurring()) {
+                Collections.addAll(concatenated, taskManager.getTaskList().get(i)
+                                            .getCompletedRecurList().toArray());
+            }
+        }
+        ObservableList<ReadOnlyTask> concatenatedList = FXCollections.observableList(concatenated);
+        concatenatedList.sort(ReadOnlyTask.READONLYTASK_DATE_COMPARATOR);
+        return concatenatedList;
+    }
+    //@@author A0150120H
+    @Override
+    public int getFilteredTaskListIndex(ReadOnlyTask targetTask) {
+        return getFilteredTaskList().indexOf(targetTask);
     }
 
 }

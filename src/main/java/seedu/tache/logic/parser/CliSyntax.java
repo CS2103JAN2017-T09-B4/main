@@ -2,30 +2,56 @@ package seedu.tache.logic.parser;
 
 import java.util.regex.Pattern;
 
-import seedu.tache.logic.parser.ArgumentTokenizer.Prefix;
-
 /**
  * Contains Command Line Interface (CLI) syntax definitions common to multiple commands
  */
 public class CliSyntax {
 
-    /* Prefix definitions */
-    public static final Prefix PREFIX_PHONE = new Prefix("p/");
-    public static final Prefix PREFIX_EMAIL = new Prefix("e/");
-    public static final Prefix PREFIX_ADDRESS = new Prefix("a/");
-    public static final Prefix PREFIX_TAG = new Prefix("t/");
-
+    //@@author A0139925U
     /* Parameter delimiter definitions */
-    public static final String PARAMETER_DELIMITER = new String(";");
-    public static final String EDIT_PARAMETER_DELIMITER = new String(" ");
+    public static final String DELIMITER_PARAMETER = new String(";");
+    public static final String DELIMITER_INDEX = new String(",");
+    public static final String DELIMITER_EDIT_PARAMETER = new String(" ");
+
+    /* Natural Language Processing definitions */
+    public static final String KEYWORD_EDIT_PARAMETER_VALUE = "to";
+    public static final String KEYWORD_EDIT_PARAMETER = "change";
+    public static final String KEYWORD_EDIT_MULTI_PARAMETER = "and";
 
     /* Parameter names definitions */
-    public static final String NAME_PARAMETER = "name";
-    public static final String START_DATE_PARAMETER = "start_date";
-    public static final String END_DATE_PARAMETER = "end_date";
-    public static final String START_TIME_PARAMETER = "start_time";
-    public static final String END_TIME_PARAMETER = "end_time";
-    public static final String TAG_PARAMETER = "tag";
+    public static final String[] PARAMETER_NAME = {"name", "n"};
+    public static final String[] PARAMETER_START_DATE = {"start_date", "startdate", "sd"};
+    public static final String[] PARAMETER_END_DATE = {"end_date", "enddate", "ed"};
+    public static final String[] PARAMETER_START_TIME = {"start_time", "starttime", "st"};
+    public static final String[] PARAMETER_END_TIME = {"end_time", "endtime", "et"};
+    public static final String[] PARAMETER_TAG = {"tag", "t"};
+    public static final String[] PARAMETER_RECUR_INTERVAL = {"recur_interval", "recurinterval", "ri"};
+    public static final String[] PARAMETER_RECUR_STATUS = {"recur_status", "recurstatus", "rs"};
+
+    /* List filter definitions */
+    public static final String FILTER_COMPLETED = "completed";
+    public static final String FILTER_UNCOMPLETED = "uncompleted";
+    public static final String FILTER_ALL = "all";
+    //@@author A0142255M
+    public static final String FILTER_TIMED = "timed";
+    public static final String FILTER_FLOATING = "floating";
+    //@@author A0139961U
+    public static final String FILTER_DUE_TODAY = "today";
+    public static final String FILTER_DUE_THIS_WEEK = "this week";
+    public static final String FILTER_OVERDUE = "overdue";
+
+    //@@author A0142255M
+    /* Calendar show view options */
+    public static final String VIEW_DAY = "day";
+    public static final String VIEW_WEEK = "week";
+    public static final String VIEW_MONTH = "month";
+    //@@author
+  //@@author A0150120H
+    public static final String[] START_DATE_IDENTIFIER = {"from"};
+    public static final String[] END_DATE_IDENTIFIER = {"to", "on", "by", "before"};
+    public static final String[] RECURRENCE_PREFIX_IDENTIFIER = {"every"};
+    public static final String[] DAILY_REURRENCE_IDENTIFIER = {"daily"};
+    //@@author
 
     /* Patterns definitions */
     public static final Pattern KEYWORDS_ARGS_FORMAT =

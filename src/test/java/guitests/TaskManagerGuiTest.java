@@ -12,14 +12,16 @@ import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.testfx.api.FxToolkit;
 
-import guitests.guihandles.BrowserPanelHandle;
+import guitests.guihandles.CalendarPanelHandle;
 import guitests.guihandles.CommandBoxHandle;
-import guitests.guihandles.DetailedTaskListPanelHandle;
 import guitests.guihandles.MainGuiHandle;
 import guitests.guihandles.MainMenuHandle;
 import guitests.guihandles.ResultDisplayHandle;
+import guitests.guihandles.StatusBarFooterHandle;
 import guitests.guihandles.TaskCardHandle;
+import guitests.guihandles.TaskCountHandle;
 import guitests.guihandles.TaskListPanelHandle;
+import guitests.guihandles.TaskListTypeHandle;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import seedu.tache.TestApp;
@@ -28,7 +30,6 @@ import seedu.tache.commons.events.BaseEvent;
 import seedu.tache.model.TaskManager;
 import seedu.tache.model.task.ReadOnlyTask;
 import seedu.tache.testutil.TestUtil;
-import seedu.tache.testutil.TypicalTestDetailedTasks;
 import seedu.tache.testutil.TypicalTestTasks;
 
 /**
@@ -51,10 +52,14 @@ public abstract class TaskManagerGuiTest {
     protected MainGuiHandle mainGui;
     protected MainMenuHandle mainMenu;
     protected TaskListPanelHandle taskListPanel;
-    protected DetailedTaskListPanelHandle detailedTaskListPanel;
     protected ResultDisplayHandle resultDisplay;
     protected CommandBoxHandle commandBox;
-    protected BrowserPanelHandle browserPanel;
+    protected CalendarPanelHandle calendarPanel;
+    //@@author A0142255M
+    protected TaskListTypeHandle taskListType;
+    protected TaskCountHandle taskCount;
+    protected StatusBarFooterHandle statusBarFooter;
+    //@@author
     private Stage stage;
 
     @BeforeClass
@@ -72,11 +77,13 @@ public abstract class TaskManagerGuiTest {
         FxToolkit.setupStage((stage) -> {
             mainGui = new MainGuiHandle(new GuiRobot(), stage);
             mainMenu = mainGui.getMainMenu();
+            taskListType = mainGui.getTaskListType();
+            taskCount = mainGui.getTaskCount();
             taskListPanel = mainGui.getTaskListPanel();
-            detailedTaskListPanel = mainGui.getDetailedTaskListPanel();
             resultDisplay = mainGui.getResultDisplay();
             commandBox = mainGui.getCommandBox();
-            browserPanel = mainGui.getBrowserPanel();
+            calendarPanel = mainGui.getCalendarPanel();
+            statusBarFooter = mainGui.getStatusBarFooter();
             this.stage = stage;
         });
         EventsCenter.clearSubscribers();
@@ -93,7 +100,6 @@ public abstract class TaskManagerGuiTest {
     protected TaskManager getInitialData() {
         TaskManager ab = new TaskManager();
         TypicalTestTasks.loadTaskManagerWithSampleData(ab);
-        TypicalTestDetailedTasks.loadTaskManagerWithSampleData(ab);
         return ab;
     }
 

@@ -2,21 +2,28 @@ package seedu.tache.ui;
 
 import java.util.logging.Logger;
 
+//import org.controlsfx.control.Notifications;
+
 import com.google.common.eventbus.Subscribe;
 
 import javafx.application.Platform;
+//import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
+//import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
+//import javafx.util.Duration;
 import seedu.tache.MainApp;
 import seedu.tache.commons.core.ComponentManager;
 import seedu.tache.commons.core.Config;
 import seedu.tache.commons.core.LogsCenter;
+import seedu.tache.commons.events.model.TaskManagerChangedEvent;
 import seedu.tache.commons.events.storage.DataSavingExceptionEvent;
 import seedu.tache.commons.events.ui.JumpToListRequestEvent;
+import seedu.tache.commons.events.ui.PopulateRecurringGhostTaskEvent;
 import seedu.tache.commons.events.ui.ShowHelpRequestEvent;
-import seedu.tache.commons.events.ui.TaskPanelSelectionChangedEvent;
+import seedu.tache.commons.events.ui.TaskPanelConnectionChangedEvent;
 import seedu.tache.commons.util.StringUtil;
 import seedu.tache.logic.Logic;
 import seedu.tache.model.UserPrefs;
@@ -28,10 +35,11 @@ public class UiManager extends ComponentManager implements Ui {
     private static final Logger logger = LogsCenter.getLogger(UiManager.class);
     private static final String ICON_APPLICATION = "/images/tache.png";
     public static final String ALERT_DIALOG_PANE_FIELD_ID = "alertDialogPane";
-
     private Logic logic;
     private Config config;
     private UserPrefs prefs;
+    private HotkeyManager hotkeyManager;
+    private NotificationManager notificationManager;
     private MainWindow mainWindow;
 
     public UiManager(Logic logic, Config config, UserPrefs prefs) {
@@ -49,6 +57,9 @@ public class UiManager extends ComponentManager implements Ui {
         //Set the application icon.
         primaryStage.getIcons().add(getImage(ICON_APPLICATION));
 
+        hotkeyManager = new HotkeyManager(primaryStage);
+        hotkeyManager.start();
+
         try {
             mainWindow = new MainWindow(primaryStage, config, prefs, logic);
             mainWindow.show(); //This should be called before creating other UI parts
@@ -58,6 +69,9 @@ public class UiManager extends ComponentManager implements Ui {
             logger.severe(StringUtil.getDetails(e));
             showFatalErrorDialogAndShutdown("Fatal error during initializing", e);
         }
+
+        notificationManager = new NotificationManager(logic);
+        notificationManager.start();
     }
 
     @Override
@@ -65,6 +79,8 @@ public class UiManager extends ComponentManager implements Ui {
         prefs.updateLastUsedGuiSetting(mainWindow.getCurrentGuiSetting());
         mainWindow.hide();
         mainWindow.releaseResources();
+        hotkeyManager.stop();
+        notificationManager.stop();
     }
 
     private void showFileOperationAlertAndWait(String description, String details, Throwable cause) {
@@ -83,7 +99,7 @@ public class UiManager extends ComponentManager implements Ui {
     private static void showAlertDialogAndWait(Stage owner, AlertType type, String title, String headerText,
                                                String contentText) {
         final Alert alert = new Alert(type);
-        alert.getDialogPane().getStylesheets().add("view/DarkTheme.css");
+        alert.getDialogPane().getStylesheets().add("view/TacheTheme.css");
         alert.initOwner(owner);
         alert.setTitle(title);
         alert.setHeaderText(headerText);
@@ -119,10 +135,28 @@ public class UiManager extends ComponentManager implements Ui {
         mainWindow.getTaskListPanel().scrollTo(event.targetIndex);
     }
 
+    //@@author A0139925U
     @Subscribe
-    private void handleTaskPanelSelectionChangedEvent(TaskPanelSelectionChangedEvent event) {
+    private void handleTaskPanelConnectionChangedEvent(TaskPanelConnectionChangedEvent event) {
         logger.info(LogsCenter.getEventHandlingLogMessage(event));
-        mainWindow.loadTaskPage(event.getNewSelection());
+        if (mainWindow.getTaskListPanel() != null) {
+            mainWindow.getTaskListPanel().resetConnections(event.getNewConnection());
+        }
+    }
+
+    @Subscribe
+    private void handlePopulateRecurringGhostTaskEvent(PopulateRecurringGhostTaskEvent event) {
+        logger.info(LogsCenter.getEventHandlingLogMessage(event));
+        if (mainWindow.getTaskListPanel() != null) {
+            mainWindow.getCalendarPanel().addAllEvents(event.getAllCompletedRecurringGhostTasks());
+            mainWindow.getCalendarPanel().addAllEvents(event.getAllUncompletedRecurringGhostTasks());
+        }
+    }
+
+    @Subscribe
+    public void handleUpdateNotificationsEvent(TaskManagerChangedEvent event) {
+        logger.info(LogsCenter.getEventHandlingLogMessage(event));
+        notificationManager.updateNotifications(event);
     }
 
 }

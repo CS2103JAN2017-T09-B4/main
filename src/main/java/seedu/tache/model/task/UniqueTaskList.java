@@ -42,6 +42,21 @@ public class UniqueTaskList implements Iterable<Task> {
         internalList.add(toAdd);
     }
 
+    //@@author A0150120H
+    /**
+     * Adds a task to the list at the specified index.
+     *
+     * @throws DuplicateTaskException if the task to add is a duplicate of an existing task in the list.
+     */
+    public void add(int index, Task toAdd) throws DuplicateTaskException {
+        assert toAdd != null;
+        if (contains(toAdd)) {
+            throw new DuplicateTaskException();
+        }
+        internalList.add(index, toAdd);
+    }
+    //@@author
+
     /**
      * Updates the task in the list at position {@code index} with {@code editedTask}.
      *
@@ -49,14 +64,16 @@ public class UniqueTaskList implements Iterable<Task> {
      *      another existing task in the list.
      * @throws IndexOutOfBoundsException if {@code index} < 0 or >= the size of the list.
      */
-    public void updateTask(int index, ReadOnlyTask editedTask) throws DuplicateTaskException {
+    public void updateTask(ReadOnlyTask readOnlyTaskToUpdate, ReadOnlyTask editedTask) throws DuplicateTaskException {
         assert editedTask != null;
+        assert readOnlyTaskToUpdate instanceof Task;
 
-        Task taskToUpdate = internalList.get(index);
+        Task taskToUpdate = (Task) readOnlyTaskToUpdate;
         if (!taskToUpdate.equals(editedTask) && internalList.contains(editedTask)) {
             throw new DuplicateTaskException();
         }
 
+        int index = internalList.indexOf(taskToUpdate);
         taskToUpdate.resetData(editedTask);
         // TODO: The code below is just a workaround to notify observers of the updated task.
         // The right way is to implement observable properties in the Task class.
@@ -90,9 +107,12 @@ public class UniqueTaskList implements Iterable<Task> {
         setTasks(replacement);
     }
 
+    //@@author A0139961U
     public UnmodifiableObservableList<Task> asObservableList() {
+        internalList.sort(Task.taskDateComparator);
         return new UnmodifiableObservableList<>(internalList);
     }
+    //@@author
 
     @Override
     public Iterator<Task> iterator() {
@@ -103,8 +123,7 @@ public class UniqueTaskList implements Iterable<Task> {
     public boolean equals(Object other) {
         return other == this // short circuit if same object
                 || (other instanceof UniqueTaskList // instanceof handles nulls
-                && this.internalList.equals(
-                ((UniqueTaskList) other).internalList));
+                && this.internalList.equals(((UniqueTaskList) other).internalList));
     }
 
     @Override

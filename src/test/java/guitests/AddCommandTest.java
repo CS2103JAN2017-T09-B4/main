@@ -7,6 +7,7 @@ import org.junit.Test;
 import guitests.guihandles.TaskCardHandle;
 import seedu.tache.commons.core.Messages;
 import seedu.tache.logic.commands.AddCommand;
+import seedu.tache.model.task.Name;
 import seedu.tache.testutil.TestTask;
 import seedu.tache.testutil.TestUtil;
 
@@ -29,15 +30,39 @@ public class AddCommandTest extends TaskManagerGuiTest {
         commandBox.runCommand(td.getFit.getAddCommand());
         assertResultMessage(AddCommand.MESSAGE_DUPLICATE_TASK);
         assertTrue(taskListPanel.isListMatching(currentList));
-
-        //add to empty list
+        //@@author A0150120H
+        //add task with end date only
         commandBox.runCommand("clear");
-        assertAddSuccess(td.eggsAndBread);
+        currentList = new TestTask[0];
+        assertAddSuccess(td.eggsAndBread, currentList);
+        currentList = TestUtil.addTasksToList(currentList, td.eggsAndBread);
 
+        //add task with both start and end date
+        assertAddSuccess(td.visitFriend, currentList);
+
+        //Invalid format: Start date only
+        commandBox.runCommand(td.startDateOnly.getAddCommand());
+        assertResultMessage(String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+        //@@author
         //invalid command
         commandBox.runCommand("adds Read Newspaper");
         assertResultMessage(Messages.MESSAGE_UNKNOWN_COMMAND);
     }
+
+    //@@author A0142255M
+    @Test
+    public void add_invalidTask_failure() {
+        commandBox.runCommand(AddCommand.COMMAND_WORD + " ");
+        assertResultMessage(Name.MESSAGE_NAME_CONSTRAINTS);
+    }
+
+    @Test
+    public void add_shortCommand_success() {
+        TestTask toAdd = td.getFit;
+        commandBox.runCommand(AddCommand.SHORT_COMMAND_WORD + " " + toAdd.getName().fullName);
+        assertResultMessage(String.format(AddCommand.MESSAGE_SUCCESS, toAdd.toString()));
+    }
+    //@@author
 
     private void assertAddSuccess(TestTask taskToAdd, TestTask... currentList) {
         commandBox.runCommand(taskToAdd.getAddCommand());

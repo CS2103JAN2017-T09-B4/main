@@ -1,91 +1,67 @@
 package seedu.tache.logic.parser;
 
-import java.util.Arrays;
+import static seedu.tache.logic.parser.CliSyntax.END_DATE_IDENTIFIER;
+import static seedu.tache.logic.parser.CliSyntax.PARAMETER_END_DATE;
+import static seedu.tache.logic.parser.CliSyntax.PARAMETER_END_TIME;
+import static seedu.tache.logic.parser.CliSyntax.PARAMETER_NAME;
+import static seedu.tache.logic.parser.CliSyntax.PARAMETER_RECUR_INTERVAL;
+import static seedu.tache.logic.parser.CliSyntax.PARAMETER_RECUR_STATUS;
+import static seedu.tache.logic.parser.CliSyntax.PARAMETER_START_DATE;
+import static seedu.tache.logic.parser.CliSyntax.PARAMETER_START_TIME;
+import static seedu.tache.logic.parser.CliSyntax.PARAMETER_TAG;
+import static seedu.tache.logic.parser.CliSyntax.START_DATE_IDENTIFIER;
+
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Deque;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import seedu.tache.commons.exceptions.IllegalValueException;
 import seedu.tache.commons.util.StringUtil;
+import seedu.tache.model.recurstate.RecurState;
+import seedu.tache.model.recurstate.RecurState.RecurInterval;
 import seedu.tache.model.tag.Tag;
 import seedu.tache.model.tag.UniqueTagList;
-import seedu.tache.model.task.Date;
-import seedu.tache.model.task.Name;
-import seedu.tache.model.task.Time;
+import seedu.tache.model.task.DateTime;
 
 /**
  * Contains utility methods used for parsing strings in the various *Parser classes
  */
 public class ParserUtil {
+    //@@author A0139925U
+    private static final Pattern FORMAT_INDEX_ARGS = Pattern.compile("(?<targetIndex>.+)");
 
-    private static final Pattern INDEX_ARGS_FORMAT = Pattern.compile("(?<targetIndex>.+)");
-    private static final Pattern NAME_FORMAT = Pattern.compile("^\".+\"");
-    private static final Pattern DATE_FORMAT = Pattern.compile("^[0-3]?[0-9]/[0-1]?[0-9]/"
-                                                               + "(?:[0-9]{2})?[0-9]{2}$|^[0-3]?[0-9]-[0-1]?[0-9]-"
-                                                               + "(?:[0-9]{2})?[0-9]{2}$|^[0-3]{1}[0-9]{1}[0-1]{1}"
-                                                               + "[0-9]{1}(?:[0-9]{2})?[0-9]{2}$");
-    private static final Pattern TIME_FORMAT = Pattern.compile("^[0-2][0-9][0-5][0-9]|^([0-1][0-2]|[0-9])"
+    private static final Pattern FORMAT_DATE = Pattern.compile("^[0-3]?[0-9]/[0-1]?[0-9]/(?:[0-9]{2})?[0-9]{2}$"
+                                                               + "|^[0-3]?[0-9]-[0-1]?[0-9]-(?:[0-9]{2})?[0-9]{2}$"
+                                                               + "|^[0-3]{1}[0-9]{1}[0-1]{1}[0-9]{1}"
+                                                               + "(?:[0-9]{2})?[0-9]{2}$");
+    private static final Pattern FORMAT_TIME = Pattern.compile("^[0-2][0-9][0-5][0-9]|^([0-1][0-2]|[0-9])"
                                                                + "([.][0-5][0-9])?\\s?(am|pm){1}");
-    private static final Pattern DURATION_FORMAT = Pattern.compile("^\\d+\\s?((h|hr|hrs)|(m|min|mins))");
+    private static final Pattern FORMAT_DURATION = Pattern.compile("^\\d+\\s?((h|hr|hrs)|(m|min|mins))");
 
-    public static final int TYPE_TASK = 0;
-    public static final int TYPE_DETAILED_TASK = 1;
-
+    //@@author A0150120H
+    static enum DateTimeType { START, END, UNKNOWN, RECURRENCE };
+    //@@author
     /**
      * Returns the specified index in the {@code command} if it is a positive unsigned integer
      * Returns an {@code Optional.empty()} otherwise.
      */
     public static Optional<Integer> parseIndex(String command) {
-        final Matcher matcher = INDEX_ARGS_FORMAT.matcher(command.trim());
+        final Matcher matcher = FORMAT_INDEX_ARGS.matcher(command.trim());
         if (!matcher.matches()) {
             return Optional.empty();
         }
 
         String index = matcher.group("targetIndex");
         if (!StringUtil.isUnsignedInteger(index)) {
-            if (!StringUtil.hasSpecialCharactes(index) && !index.equals("0")) {
-                return Optional.of(toAlphabeticReverse(index.toUpperCase()));
-            } else {
-                return Optional.empty();
-            }
+            return Optional.empty();
         }
         return Optional.of(Integer.parseInt(index));
 
-    }
-
-    /**
-     * Returns a new Set populated by all elements in the given list of strings
-     * Returns an empty set if the given {@code Optional} is empty,
-     * or if the list contained in the {@code Optional} is empty
-     */
-    public static Set<String> toSet(Optional<List<String>> list) {
-        List<String> elements = list.orElse(Collections.emptyList());
-        return new HashSet<>(elements);
-    }
-
-    /**
-    * Splits a preamble string into ordered fields.
-    * @return A list of size {@code numFields} where the ith element is the ith field value if specified in
-    *         the input, {@code Optional.empty()} otherwise.
-    */
-    public static List<Optional<String>> splitPreamble(String preamble, int numFields) {
-        return Arrays.stream(Arrays.copyOf(preamble.split("\\s+", numFields), numFields))
-                .map(Optional::ofNullable)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Parses a {@code Optional<String> name} into an {@code Optional<Name>} if {@code name} is present.
-     */
-    public static Optional<Name> parseName(Optional<String> name) throws IllegalValueException {
-        assert name != null;
-        return name.isPresent() ? Optional.of(new Name(name.get())) : Optional.empty();
     }
 
     /**
@@ -99,52 +75,47 @@ public class ParserUtil {
         }
         return new UniqueTagList(tagSet);
     }
-
+    //@@author A0139925U
     /**
-     * Returns True if input is a valid date
+     * Returns True if input is a valid parameter
      * Returns False otherwise.
      */
-    public static boolean isValidDate(String input) {
-        final Matcher matcher = DATE_FORMAT.matcher(input.trim());
-        return matcher.matches();
+    public static boolean isValidParameter(String input) {
+        return ParserUtil.isFoundIn(input, PARAMETER_NAME, PARAMETER_START_DATE, PARAMETER_END_DATE,
+                PARAMETER_START_TIME, PARAMETER_END_TIME, PARAMETER_TAG,
+                PARAMETER_RECUR_INTERVAL, PARAMETER_RECUR_STATUS);
     }
 
     /**
-     * Returns True if input is a valid time
-     * Returns False otherwise.
+     * Parses a string into a valid RecurInterval enum reference
+     * @param input String to parse
+     * @return valid RecurInterval enum reference if input is valid, throws IllegalValueException otherwise
      */
-    public static boolean isValidTime(String input) {
-        final Matcher matcher = TIME_FORMAT.matcher(input.trim());
-        if (matcher.matches()) {
-            return true;
+    public static RecurInterval parseStringToRecurInterval(String input) throws IllegalValueException {
+        RecurInterval stringToEnum = null;
+        switch (input.trim().toLowerCase()) {
+        case "none":
+            stringToEnum = RecurInterval.NONE;
+            break;
+        case "day":
+            stringToEnum = RecurInterval.DAY;
+            break;
+        case "week":
+            stringToEnum = RecurInterval.WEEK;
+            break;
+        case "month":
+            stringToEnum = RecurInterval.MONTH;
+            break;
+        case "year":
+            stringToEnum = RecurInterval.YEAR;
+            break;
         }
-        return false;
-    }
-
-    /**
-     * Returns True if input is a valid duration
-     * Returns False otherwise.
-     */
-    public static boolean isValidDuration(String input) {
-        final Matcher matcher = DURATION_FORMAT.matcher(input.trim());
-        if (matcher.matches()) {
-            return true;
+        if (stringToEnum == null) {
+            throw new IllegalValueException(RecurState.MESSAGE_RECUR_INTERVAL_CONSTRAINTS);
         }
-        return false;
+        return stringToEnum;
     }
-
-    /**
-     * Returns True if input is a valid name
-     * Returns False otherwise.
-     */
-    public static boolean isValidName(String input) {
-        final Matcher matcher = NAME_FORMAT.matcher(input.trim());
-        if (matcher.matches()) {
-            return true;
-        }
-        return false;
-    }
-
+    //@@author
     /**
      * Returns number of date parameters in input.
      */
@@ -168,28 +139,14 @@ public class ParserUtil {
             return false;
         }
     }
-
-    /**
-     * Returns data type based on the input
-     */
-    public static Object determineType(String input) throws IllegalValueException {
-        if (isValidDate(input)) {
-            return new Date(input);
-        } else if (isValidTime(input)) {
-            return new Time(input);
-        } else if (isValidName(input)) {
-            return new Name(input);
-        }
-        throw new IllegalValueException("Invalid Input");
-    }
-
+    //@@author A0150120H
     /**
      * Returns the first time String encountered
      */
     public static String parseTime(String input) throws IllegalValueException {
         String[] inputs = input.split(" ");
         for (String candidate : inputs) {
-            Matcher matcher = TIME_FORMAT.matcher(candidate.trim());
+            Matcher matcher = FORMAT_TIME.matcher(candidate.trim());
             if (matcher.lookingAt()) {
                 return matcher.group();
             }
@@ -203,41 +160,108 @@ public class ParserUtil {
     public static String parseDate(String input) throws IllegalValueException {
         String[] inputs = input.split(" ");
         for (String candidate : inputs) {
-            Matcher matcher = DATE_FORMAT.matcher(candidate.trim());
+            Matcher matcher = FORMAT_DATE.matcher(candidate.trim());
             if (matcher.lookingAt()) {
                 return matcher.group();
             }
         }
         throw new IllegalValueException("Invalid Input");
     }
+
     /**
-     * Returns the corresponding integer value of the String entered
+     * Checks if the given String is a start date identifier
+     * @param s String to check
+     * @return true if it's a start date identifier, false otherwise
      */
-    private static int toAlphabeticReverse(String input) {
-        char lastCharacter = input.charAt(input.length() - 1);
-        int index = lastCharacter - 'A' + 1;
-        for (int i = input.length() - 1; i > 0; i--) {
-            index += 26;
-        }
-        return index;
+    public static boolean isStartDateIdentifier(String s) {
+        return isFoundIn(s, START_DATE_IDENTIFIER);
     }
 
     /**
-     * Returns the type of index (Integer/Alphabet) based on the command
-     * Returns the value of TYPE_TASK if index is a integer
-     * Returns the value of TYPE_DETAILED_TASK if index is a alphabet
+     * Checks if the given String is an end date identifier
+     * @param s String to check
+     * @return true if it's a start date identifier, false otherwise
      */
-    public static Optional<Integer> determineIndexType(String command) {
-        final Matcher matcher = INDEX_ARGS_FORMAT.matcher(command.trim());
-        if (!matcher.matches()) {
-            return Optional.empty();
-        }
-
-        String index = matcher.group("targetIndex");
-        if (!StringUtil.isUnsignedInteger(index)) {
-            return Optional.of(TYPE_DETAILED_TASK);
-        }
-        return Optional.of(TYPE_TASK);
-
+    public static boolean isEndDateIdentifier(String s) {
+        return isFoundIn(s, END_DATE_IDENTIFIER);
     }
+
+    /**
+     * Looks for all possible date/time strings based on identifiers
+     * @param input String to parse
+     * @return Deque of PossibleDateTime objects, each representing a possible date/time string
+     */
+    public static Deque<PossibleDateTime> parseDateTimeIdentifiers(String input) {
+        String[] inputs = input.split(" ");
+        Deque<PossibleDateTime> result = new LinkedList<PossibleDateTime>();
+        PossibleDateTime current = new PossibleDateTime(PossibleDateTime.INVALID_INDEX, DateTimeType.UNKNOWN);
+        for (int i = 0; i < inputs.length; i++) {
+            String word = inputs[i];
+            if (isStartDateIdentifier(word)) {
+                result.push(current);
+                current = new PossibleDateTime(i, DateTimeType.START);
+            } else if (isEndDateIdentifier(word)) {
+                result.push(current);
+                current = new PossibleDateTime(i, DateTimeType.END);
+            } else {
+                current.appendDateTime(i, word);
+            }
+        }
+        result.push(current);
+        return result;
+    }
+
+    /**
+     * Class to describe a date/time String that was found
+     *
+     */
+    static class PossibleDateTime {
+        int startIndex;
+        int endIndex;
+        String data;
+        DateTimeType type;
+
+        static final int INVALID_INDEX = -1;
+
+        PossibleDateTime(int index, DateTimeType type) {
+            this.startIndex = index;
+            this.endIndex = index;
+            this.type = type;
+            this.data = new String();
+        }
+
+        void appendDateTime(int index, String data) {
+            this.data += " " + data;
+            this.endIndex = index;
+        }
+    }
+
+    public static boolean canParse(String s) {
+        return DateTime.canParse(s);
+    }
+
+    public static boolean isTime(String s) {
+        return DateTime.isTime(s);
+    }
+
+    public static boolean isDate(String s) {
+        return DateTime.isDate(s);
+    }
+    /**
+     * Checks if the given string exists in any of the arrays in strArrays. Check is case insensitive
+     * @param s String to check
+     * @param strArrays Arrays of Strings to check against
+     * @return true if s is in strArray, false otherwise
+     */
+    public static boolean isFoundIn(String s, String[]... strArrays) {
+        for (String[] strArray: strArrays) {
+            for (String str: strArray) {
+                if (s.equalsIgnoreCase(str)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 }

@@ -1,10 +1,19 @@
 package seedu.tache.ui;
 
+import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import org.controlsfx.control.textfield.AutoCompletionBinding;
+import org.controlsfx.control.textfield.TextFields;
+
+import javafx.application.Platform;
+import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Region;
 import seedu.tache.commons.core.LogsCenter;
@@ -18,6 +27,10 @@ public class CommandBox extends UiPart<Region> {
     private final Logger logger = LogsCenter.getLogger(CommandBox.class);
     private static final String FXML = "CommandBox.fxml";
     public static final String ERROR_STYLE_CLASS = "error";
+    //@@author A0142255M
+    private static ArrayList<String> userInputs = new ArrayList<String>();
+    private static int currentUserInputIndex = userInputs.size();
+    //@@author
 
     private final Logic logic;
 
@@ -28,6 +41,8 @@ public class CommandBox extends UiPart<Region> {
         super(FXML);
         this.logic = logic;
         addToPlaceholder(commandBoxPlaceholder);
+        setAutocomplete();
+        setSaveCommandHistory();
     }
 
     private void addToPlaceholder(AnchorPane placeHolderPane) {
@@ -37,10 +52,18 @@ public class CommandBox extends UiPart<Region> {
         FxViewUtil.applyAnchorBoundaryParameters(commandTextField, 0.0, 0.0, 0.0, 0.0);
     }
 
+    //@@author A0142255M
+    /**
+     * Executes the user command and adds it to the list of previous commands for retrieval.
+     * Handles command success as well as command failure.
+     */
     @FXML
     private void handleCommandInputChanged() {
         try {
-            CommandResult commandResult = logic.execute(commandTextField.getText());
+            String userInput = commandTextField.getText();
+            userInputs.add(userInput);
+            currentUserInputIndex = userInputs.size();
+            CommandResult commandResult = logic.execute(userInput);
 
             // process result of the command
             setStyleToIndicateCommandSuccess();
@@ -56,6 +79,66 @@ public class CommandBox extends UiPart<Region> {
         }
     }
 
+    /**
+     * Sets autocomplete functionality for user commands.
+     * Uses ControlsFX Autocomplete TextField function.
+     */
+    private void setAutocomplete() {
+        String[] possibleCommands = {"add ", "clear", "complete ", "delete ", "edit ", "exit", "find ",
+                                        "help", "list", "save ", "select ", "load ", "undo", "next", "prev", "view " };
+        AutoCompletionBinding<String> binding = TextFields.bindAutoCompletion(commandTextField, sr -> {
+            ArrayList<String> commands = new ArrayList<String>();
+            for (String str : possibleCommands) {
+                String userInput = sr.getUserText();
+                if ((!userInput.equals("") && str.startsWith(userInput) && !userInput.equals(str))) {
+                    commands.add(str);
+                }
+            }
+            return commands;
+        });
+        binding.setMaxWidth(100);
+        binding.setDelay(50);
+    }
+
+    /**
+     * Keeps track of previous commands executed and retrieves them with Up and Down keys.
+     * Sets the caret of the text field right at the end of the command retrieved.
+     */
+    private void setSaveCommandHistory() {
+        commandTextField.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                String userInput;
+                if (userInputs.isEmpty()) {
+                    return;
+                }
+                if (event.getCode() == KeyCode.UP && currentUserInputIndex >= 0) {
+                    currentUserInputIndex--;
+                    userInput = userInputs.get(currentUserInputIndex);
+                    setTextAndCaret(userInput);
+                }
+                if (event.getCode() == KeyCode.DOWN && currentUserInputIndex < userInputs.size() - 1) {
+                    currentUserInputIndex++;
+                    userInput = userInputs.get(currentUserInputIndex);
+                    setTextAndCaret(userInput);
+                }
+            }
+
+            private void setTextAndCaret(String userInput) {
+                if (userInput.length() > 0) {
+                    commandTextField.setText(userInput);
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            commandTextField.positionCaret(userInput.length());
+                        }
+                    });
+                }
+            }
+        });
+    }
+    //@@author
+
 
     /**
      * Sets the command box style to indicate a successful command.
@@ -68,7 +151,11 @@ public class CommandBox extends UiPart<Region> {
      * Sets the command box style to indicate a failed command.
      */
     private void setStyleToIndicateCommandFailure() {
-        commandTextField.getStyleClass().add(ERROR_STYLE_CLASS);
+        ObservableList<String> styleClass = commandTextField.getStyleClass();
+        if (styleClass.contains(ERROR_STYLE_CLASS)) {
+            return;
+        }
+        styleClass.add(ERROR_STYLE_CLASS);
     }
 
 }

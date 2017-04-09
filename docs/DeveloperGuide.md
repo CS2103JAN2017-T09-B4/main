@@ -1,4 +1,4 @@
-# Tâche - Developer Guide
+# Tache - Developer Guide
 
 By : `T09-B4`  &nbsp;&nbsp;&nbsp;&nbsp; Since: `Feb 2017`  &nbsp;&nbsp;&nbsp;&nbsp; Licence: `MIT`
 
@@ -30,9 +30,9 @@ By : `T09-B4`  &nbsp;&nbsp;&nbsp;&nbsp; Since: `Feb 2017`  &nbsp;&nbsp;&nbsp;&nb
 ## 1. Introduction
 
 <img src="images/Ui.png" width="600"><br>
-_Figure 1.1 : Tâche User Interface_
+_Figure 1.1 : Tache User Interface_
 
-Tâche is an application designed for people who _store, retrieve and edit their to-do tasks frequently_.
+Tache is an application designed for people who _store, retrieve and edit their to-do tasks frequently_.
 We are also targeting our application towards desktop users who _prefer typing on the keyboard over the mouse_.
 Hence, primary input for the application will be _command-driven_ and using the
 [Command Line Interface](#command-line-interface-cli) (CLI).
@@ -45,7 +45,7 @@ Hence, primary input for the application will be _command-driven_ and using the
 1. **JDK `1.8.0_60`**  or later<br>
 
     > Having any Java 8 version is not enough. <br>
-    Tâche will not work with earlier versions of Java 8.
+    Tache will not work with earlier versions of Java 8.
 
 2. **Eclipse** [IDE](#integrated-development-environment-ide)
 3. **e(fx)clipse** plug-in for Eclipse (Follow the instructions from Step 2 onwards given in
@@ -138,7 +138,7 @@ Functions of `Main`:
 #### Commons Component
 
 [**`Commons`**](#commons-component) represents a collection of classes used by multiple other components.
-This collection is encapsulated in the `seedu.addressbook.commons` package. <br>
+This collection is encapsulated in the `seedu.tache.commons` package. <br>
 
 2 classes in the package, `EventsCenter` and `LogsCenter`, play important roles at the architecture level as discussed.
 
@@ -150,27 +150,30 @@ Function of `EventsCenter`:
 
 Function of `LogsCenter`:
 
-* Allows many classes to write log messages to Tâche's log file
+* Allows many classes to write log messages to Tache's log file
 
 #### Other Components
 
-The rest of Tâche consists of the following four components:
+The rest of Tache consists of the following four components:
 
 * [**`User Interface`**](#32-user-interface-ui-component) : Facilitates the interaction between the user and the system
 
 * [**`Logic`**](#33-logic-component) : Executes the user's commands
 
-* [**`Model`**](#34-model-component) : Holds the data of Tâche in-memory
+* [**`Model`**](#34-model-component) : Holds the data of Tache in-memory
 
 * [**`Storage`**](#35-storage-component) : Reads data from, and writes data to, the hard disk
 
-The [_Sequence Diagram_](#sequence-diagram) below shows how the different components interact when the user issues the
-command `delete 1`.
+#### Event-Driven Nature
+
+The interactions between the components mentioned above are integral in providing the functionality of Tache. For example,
+the [_Sequence Diagram_](#sequence-diagram) below shows how some of these components interact with one another
+to execute the user command `delete 1`.
 
 <img src="images/SDforDeleteTask.png" width="800"><br>
 _Figure 3.1.2a : Component Interactions for `delete 1` Command (Part 1)_
 
-> Note how the `Model` simply raises a `TaskManagerChangedEvent` when Tâche's data is changed,
+> Note how the `Model` simply raises a `TaskManagerChangedEvent` when Tache's data is changed,
  instead of asking the `Storage` to save the updates to the hard disk.
 
 The diagram below shows how `EventsCenter` reacts to that event, which eventually results in the following:
@@ -196,35 +199,66 @@ The sections below give more details for each component.
 
 ### 3.2. User Interface (UI) Component
 
+**Author:** Tan Yu Wei
+
 <img src="images/UiClassDiagram.png" width="800"><br>
 _Figure 3.2.1 : Structure of the UI Component_
 
-**API** : [`Ui.java`](../src/main/java/seedu/address/ui/Ui.java)
-
-The [User Interface](#user-interface-ui) (UI) consists of a `MainWindow` that is made up of several parts.
-(e.g.`CommandBox`, `ResultDisplay`, `TaskListPanel`) <br>
-
-All these, including the `MainWindow`, inherit from the abstract `UiPart` class.
-
-> The `UI` component uses the _JavaFX UI_ framework. <br>
-The layout of these UI parts are defined in matching `.fxml` files that are in the `src/main/resources/view` folder. <br>
- For example, the layout of the [`MainWindow`](../src/main/java/seedu/address/ui/MainWindow.java) is specified in
- [`MainWindow.fxml`](../src/main/resources/view/MainWindow.fxml).
+**API** : [`Ui.java`](../src/main/java/seedu/tache/ui/Ui.java)
 
 Functions of `UI`:
 
 * Executes user commands using the `Logic` component
 
-* Binds itself to some data in the `Model` so that the UI of Tâche can auto-update when data in the `Model` changes
+* Binds itself to some data in the `Model` so that the UI of Tache can auto-update when data in the `Model` changes
 
-* Responds to events raised from various parts of the Tâche and updates its UI accordingly
+* Responds to events raised from various parts of the Tache and updates its UI accordingly
+
+The [User Interface](#user-interface-ui) (UI) consists of a `MainWindow` that is made up of several parts
+(e.g.`CommandBox`, `ResultDisplay`, `TaskListPanel`). All these, including the `MainWindow`, inherit from the abstract `UiPart` class. <br>
+
+The `UI` component uses the _JavaFX UI_ framework. Hence, the layout of these UI parts are defined in matching `.fxml` files
+that are in the `src/main/resources/view` folder. For example, the layout of the
+[`MainWindow`](../src/main/java/seedu/address/ui/MainWindow.java) is specified in
+[`MainWindow.fxml`](../src/main/resources/view/MainWindow.fxml). <br>
+
+#### Design Patterns
+
+* Model-View-Controller (MVC) Pattern
+
+  > Model: the [Model](#34-model-component) component <br>
+  > View: the .fxml files in the src/main/resources/view folder <br>
+  > Controller: subclasses of UiPart (e.g. `TaskListPanel`) <br>
+
+* Observer Pattern
+
+  > Observers: objects that are registered with the EventsCenter and have the @Subscribe annotation <br>
+  > Observable: classes that raise events for the EventsCenter to notify all relevant subscibers <br>
+
+#### CalendarPanel
+
+The purpose of the `CalendarPanel` is to provide users with an overview of their [timed tasks](#timed-task) for the day, week or month.
+Instead of implementing the functionality of a calendar from scratch, a JavaScript jQuery plug-in for an event calendar,
+[FullCalendar](https://fullcalendar.io), is loaded using a JavaFX WebEngine. Its layout is defined in a `.html` file. <br>
+
+The calendar is updated whenever there are relevant changes made to the task manager.
+
+* For example, this is what happens when a [timed task](#timed-task) is selected:
+
+  > 1. `TaskListPanel` raises a `TaskPanelSelectionChangedEvent`. <br>
+  > 2. `CalendarPanel` handles the event and retrieves the date of the selected task. <br>
+  > 3. After the WebEngine successfully loads, it executes the script "change_reference_date(date)". <br>
+  > 4. This script calls the FullCalendar library method 'goToDate', passing in parameter 'date'. <br>
+  > 5. The calendar is then moved to the specified date. <br>
 
 ### 3.3. Logic Component
+
+**Author:** Brandon Tan Jian Sin
 
 <img src="images/LogicClassDiagram.png" width="800"><br>
 _Figure 3.3.1 : Structure of the Logic Component_
 
-**API** : [`Logic.java`](../src/main/java/seedu/address/logic/Logic.java)
+**API** : [`Logic.java`](../src/main/java/seedu/tache/logic/Logic.java)
 
 Function of `Logic`:
 
@@ -243,16 +277,18 @@ _Figure 3.3.2 : Interactions Inside the Logic Component for the `delete 1` Comma
 
 ### 3.4. Model Component
 
+**Author:** Lim Shun Xian
+
 <img src="images/ModelClassDiagram.png" width="800"><br>
 _Figure 3.4.1 : Structure of the Model Component_
 
-**API** : [`Model.java`](../src/main/java/seedu/address/model/Model.java)
+**API** : [`Model.java`](../src/main/java/seedu/tache/model/Model.java)
 
 Functions of `Model`:
 
 * Stores a `UserPref` object that represents the user's preferences
 
-* Stores the data in Tâche
+* Stores the data in Tache
 
 * Exposes an `UnmodifiableObservableList<ReadOnlyTask>` that can be 'observed'
 
@@ -263,16 +299,18 @@ updates when this list is modified. <br>
 
 ### 3.5. Storage Component
 
+**Author:** Lim Shun Xian
+
 <img src="images/StorageClassDiagram.png" width="800"><br>
 _Figure 3.5.1 : Structure of the Storage Component_
 
-**API** : [`Storage.java`](../src/main/java/seedu/address/storage/Storage.java)
+**API** : [`Storage.java`](../src/main/java/seedu/tache/storage/Storage.java)
 
 Functions of `Storage`:
 
 * Saves `UserPref` objects in json format and reads it back
 
-* Saves Tâche's data in xml format and reads it back
+* Saves Tache's data in xml format and reads it back
 
 
 ## 4. Implementation
@@ -293,7 +331,7 @@ The `LogsCenter` class is used to manage logging levels and logging destinations
 
 * `SEVERE` : Message shows critical problem detected which may possibly cause the termination of the application
 * `WARNING` : Message shows that developers can continue with the program, but with caution
-* `INFO` : Message shows information showing the noteworthy actions by Tâche
+* `INFO` : Message shows information showing the noteworthy actions by Tache
 * `FINE` : Message shows details that are not usually noteworthy but may be useful in debugging
 
   > E.g. print the actual list instead of just its size
@@ -326,9 +364,20 @@ Then choose `Run as` > `JUnit Test`.
 
 **GUI Tests**:
 
-These are _System Tests_ that test the entire Tâche by simulating user actions on the
+These are _System Tests_ that test the entire Tache by simulating user actions on the
 [Graphical User Interface](#graphical-user-interface-gui) (GUI). <br>
 These tests are found in the `guitests` package.
+
+**Author:** Tan Yu Wei
+
+Because the [CalendarPanel](#calendarpanel)'s functionality is provided by JavaScript,
+testing its functions fully using the _JUnit framework_ is not possible given that JUnit only
+supports Java. Hence, the functionality of the `CalendarPanel` is tested minimally by examining the result
+displayed at the `ResultDisplay` whenever a command is executed. <br>
+
+For instance, to move the calendar to the previous day, month or year, the command "prev" is
+executed. The test will then pass if `ResultDisplay` prints out the message
+"Previous day/week/month displayed at the calendar.", but fail otherwise. <br>
 
 **Non-GUI Tests**:
 
@@ -352,7 +401,7 @@ our GUI tests can be run in the _headless_ mode. <br>
  > That means that you can do other things on the computer while the tests are running. <br>
  You can refer to [UsingGradle.md](UsingGradle.md#running-tests) to learn how to run tests in the headless mode.
 
-### 5.1. Troubleshooting Tests
+### 5.4. Troubleshooting Tests
 
  **Problem: Tests fail because NullPointException when AssertionError is expected**
 
@@ -415,7 +464,7 @@ You can follow the following steps to convert the project documentation files to
 
 ### 6.6. Managing Dependencies
 
-A project often depends on third-party libraries. For example, Tâche depends on the
+A project often depends on third-party libraries. For example, Tache depends on the
 [Jackson library](http://wiki.fasterxml.com/JacksonHome) for XML parsing. <br>
 
 Managing these dependencies can be automated using Gradle.
@@ -424,18 +473,19 @@ Managing these dependencies can be automated using Gradle.
 a. Include those libraries in the repo (this bloats the repo size) <br>
 b. Require developers to download those libraries manually (this creates extra work for developers)
 
+
 ## Appendix A : User Stories
 
 Priorities: High (must have) - `* * *`, Medium (nice to have)  - `* *`,  Low (unlikely to have) - `*`
 
 
 Priority | As a ... | I want to ... | So that I can...
--------- | :-------- | :--------- | :-----------
+:----------- | :----------- | :--------- | :-----------
 `* * *` | user | obtain a list of tasks due today / this week | plan my time to complete these urgent tasks before they are due
 `* * *` | user | view tasks planned to be completed within a certain time range | easily decide on tasks I should work on during that period
 `* * *` | user | indicate a starting and ending time for my tasks | keep track of events I need to attend
 `* * *` | user | display my tasks in a calendar view | obtain a general overview of the tasks I need to complete
-`* * *` | user  | set tasks as [recurring](#recurring-tasks) at certain intervals | save time having to add the task repeatedly for different times
+`* * *` | user | set tasks as [recurring](#recurring-tasks) at certain intervals | save time having to add the task repeatedly for different times
 `* * *` | user | add [subtasks](#subtask) to existing tasks | keep track of and manage subtasks to be completed as part of bigger tasks
 `* * *` | user | mark a task as completed and filter tasks that are not completed | keep tracks of tasks that I have to complete
 `* * *` | user | view completed tasks | avoid working on tasks that are already completed
@@ -448,61 +498,77 @@ Priority | As a ... | I want to ... | So that I can...
 `* * *` | user | search for names of particular tasks | update or view specific tasks efficiently
 `* * *` | user | add new tasks | track what i need to do
 `* * *` | user | delete tasks | delete task that was inaccurately entered
-`* *` | advanced user | use shorter versions of commands | type my commands faster
-`* *` | new user | view additional usage information for particular commands | learn how to use specific commands effectively
-`* *` | user | secure my task list | prevent other people from viewing my task list
-`* *` | user | [sync](#sync) my task list to Google or Microsoft | view my tasks through their respective calendars
-`* *` | user | retrieve previously typed commands using the UP and DOWN keys and execute them directly | save time having to retype similar commands repeatedly
-`* *` | user | postpone an existing task via a specific command | save time having to specifically enter the new deadline
-`* *` | user | attach related documents and links to my tasks | conveniently access documents needed for me to work on the tasks
-`* *` | new user | view command hints when typing commands | ensure my commands are correct
-`* *` | user | block off multiple slots for the same task and release the unused slots when the exact timing of a task is confirmed | avoid having to add multiple copies of the same task to multiple potential time slots
-`* *` | user | view the slots at which I have not planned for any task to be completed | find a suitable slot for new tasks easily
-`*` | user sharing this computer with other users | switch between different accounts on this task manager | share this application with the other users of this computer
-`*` | user | backup my entire task list to the cloud or external storage via export | have extra redundancy against system failures
-`*` | user | create shared tasks across different users | track the progress of other users for shared tasks
-`*` | user | import previously exported data back | continue from where I left off
-`*` | user | receive a daily email at a preferred time that contains tasks due that day | plan my schedule for that day effectively
+&nbsp;&nbsp;`* *` | advanced user | use shorter versions of commands | type my commands faster
+&nbsp;&nbsp;`* *` | new user | view additional usage information for particular commands | learn how to use specific commands effectively
+&nbsp;&nbsp;`* *` | user | secure my task list | prevent other people from viewing my task list
+&nbsp;&nbsp;`* *` | user | [sync](#sync) my task list to Google or Microsoft | view my tasks through their respective calendars
+&nbsp;&nbsp;`* *` | user | retrieve previously typed commands using the UP and DOWN keys and execute them directly | save time having to retype similar commands repeatedly
+&nbsp;&nbsp;`* *` | user | postpone an existing task via a specific command | save time having to specifically enter the new deadline
+&nbsp;&nbsp;`* *` | user | attach related documents and links to my tasks | conveniently access documents needed for me to work on the tasks
+&nbsp;&nbsp;`* *` | new user | view command hints when typing commands | ensure my commands are correct
+&nbsp;&nbsp;`* *` | user | block off multiple slots for the same task and release the unused slots when the exact timing of a task is confirmed | avoid having to add multiple copies of the same task to multiple potential time slots
+&nbsp;&nbsp;`* *` | user | view the slots at which I have not planned for any task to be completed | find a suitable slot for new tasks easily
+&nbsp;&nbsp;&nbsp;&nbsp;`*`&nbsp;&nbsp;&nbsp;&nbsp;| user sharing<br/> this computer<br/> with other users | switch between different accounts on this task manager | share this application with the other users of this computer
+&nbsp;&nbsp;&nbsp;&nbsp;`*`&nbsp;&nbsp;&nbsp;&nbsp;| user | backup my entire task list to the cloud or external storage via export | have extra redundancy against system failures
+&nbsp;&nbsp;&nbsp;&nbsp;`*`&nbsp;&nbsp;&nbsp;&nbsp;| user | create shared tasks across different users | track the progress of other users for shared tasks
+&nbsp;&nbsp;&nbsp;&nbsp;`*`&nbsp;&nbsp;&nbsp;&nbsp;| user | import previously exported data back | continue from where I left off
+&nbsp;&nbsp;&nbsp;&nbsp;`*`&nbsp;&nbsp;&nbsp;&nbsp;| user | receive a daily email at a preferred time that contains tasks due that day | plan my schedule for that day effectively
 
-
-{More to be added}
 
 ## Appendix B : Use Cases
+
+**Author:** Tan Yu Wei
 
 ### Use case: Show possible commands to be executed
 
 **MSS**
 
 1. `User` types a letter or a sequence of letters
-2. `Tâche` shows a list of commands that contain that letter or sequence of letters
+2. `Tache` shows a list of commands that start with the letter or sequence of letters
 3. `User` selects specific command in list
-4. `Tâche` performs an [autocomplete](#autocomplete) on user's command
+4. `Tache` performs an [autocomplete](#autocomplete) on user's command <br>
 Use case ends.
 
 **Extensions**
 
 2a. No command contains letter or sequence of letters typed by `User`
 
-> 2a1. `Tâche` informs `User` that there is no such command
+> 2a1. `Tache` informs `User` that there is no such command
   Use case ends
 
 2b. `User` makes changes to input
 
 > Use case resumes at step 2
 
+**Author:** Lim Shun Xian
+
 ### Use case: Change save location
 
 **MSS**
 
-1. `User` requests to change data file location
-2. `Tâche` displays a directory chooser
-3. `User` selects a directory
-4. `Tâche` changes the save location to the one selected
+1. `User` requests to change data file location by typing the directory to save to
+2. `Tache` changes the save location to the one selected <br>
 Use case ends.
 
 **Extensions**
 
-3a. `User` cancels the request
+2a. `User` enters an invalid directory to save the file
+
+> Use case ends
+
+**Author:** Lim Shun Xian
+
+### Use case: Loads save file
+
+**MSS**
+
+1. `User` requests to load data file by typing the file path
+2. `Tache` reads the data from the file and display it on the main window <br>
+Use case ends.
+
+**Extensions**
+
+2a. `User` enters an invalid file path
 
 > Use case ends
 
@@ -511,9 +577,9 @@ Use case ends.
 **MSS**
 
 1. `User` types in predefined keyboard shortcut
-2. `Tâche` displays main window
+2. `Tache` displays main window
 3. `User` types in shortcut again
-4. `Tâche` minimizes main window
+4. `Tache` minimizes main window <br>
 Use case ends.
 
 ### Use case: Delete task
@@ -521,9 +587,9 @@ Use case ends.
 **MSS**
 
 1. `User` requests to list tasks
-2. `Tâche` shows a list of tasks
+2. `Tache` shows a list of tasks
 3. `User` requests to delete a specific task in the list
-4.  deletes the task
+4. `User` deletes the task <br>
 Use case ends.
 
 **Extensions**
@@ -534,7 +600,7 @@ Use case ends.
 
 3a. Given index is invalid
 
-> 3a1. `Tâche` informs the `User` that the given index is invalid<br>
+> 3a1. `Tache` informs the `User` that the given index is invalid<br>
 Use case resumes at step 2
 
 ### Use case: Add task
@@ -542,49 +608,98 @@ Use case resumes at step 2
 **MSS**
 
 1. `User` requests to add a task
-2. `Tâche` shows user that task is added
+2. `Tache` shows user that task is added <br>
 Use case ends.
 
 **Extensions**
 
 1a. [Parameters](#parameter) are wrong
 
-> 1a1. `Tâche` informs `User` that the parameters for the add command are wrong<br>
+> 1a1. `Tache` informs `User` that the parameters for the add command are wrong<br>
 Use case ends.
 
 1b. Task already exists
 
-> 1b1. `Tâche` informs `User` that the task already exists<br>
+> 1b1. `Tache` informs `User` that the task already exists<br>
 Use case ends
 
-### Use case: Undo task
+### Use case: Undo command
 
 **MSS**
 
 1. `User` requests to undo previous command
-2. `Tâche` reverts back to previous state before last change
+2. `Tache` reverts back to previous state before last change <br>
 Use case ends.
 
 **Extensions**
 
 2a. No user command executed beforehand
 
-> 2a1. `Tâche` shows that it has nothing to undo<br>
+> 2a1. `Tache` shows that it has nothing to undo <br>
 Use case ends
 
+**Author:** Brandon Tan Jian Sin
 
-{More to be added}
+### Use case: Edit task
+
+**MSS**
+
+1. `User` request to edit a specific task
+2. `Tache` shows confirmation that task has been edited and changes are reflected in UI<br>
+Use case ends.
+
+**Extensions**
+
+1a. [Parameters](#parameter) are wrong
+
+> 1a1. `Tache` informs `User` that the parameters for the edit command are wrong<br>
+Use case ends.
+
+### Use case: List tasks
+
+**MSS**
+
+1. `User` request to list tasks with optional filter parameter
+2. `Tache` shows lists of tasks<br>
+Use case ends.
+
+**Extensions**
+
+1a. [Parameters](#parameter) are wrong
+
+> 1a1. `Tache` informs `User` that the parameter for the list command is wrong<br>
+Use case ends.
+
+1b. [Parameters](#parameter) not given
+
+> 1b1. `Tache` shows `User` all tasks<br>
+Use case ends.
+
+### Use case: Complete tasks
+
+**MSS**
+
+1. `User` request to complete tasks
+2. `Tache` shows confirmation and completed tasks are no longer reflected in UI<br>
+Use case ends.
+
+**Extensions**
+
+1a. [Parameters](#parameter) are wrong
+
+> 1a1. `Tache` informs `User` that the parameters for the complete command are wrong<br>
+Use case ends.
 
 ## Appendix C : Non Functional Requirements
 
-1. Should be a desktop app (i.e. not a mobile or Web app)
+#### 1. Should be a desktop app (i.e. not a mobile or Web app)
 
 > Desktop apps are more general than other platforms such as mobile/embedded/web. Therefore, they provide a good
 starting point before you move on to those platforms.
 > You are allowed to integrate with online services such as Google Calendar as long as the app can provide a
 reasonable level of functionality even when offline.
 
-2. [CLI](#command-line-interface) should be the primary mode of input
+#### 2. [CLI](#command-line-interface) should be the primary mode of input
 
 > If you implement a [GUI](graphical-user-interface), it should be primarily for output (i.e. the GUI is used to give
 visual feedback rather than to collect input).
@@ -592,34 +707,31 @@ visual feedback rather than to collect input).
 > Mouse actions should have keyboard alternatives and typing compared to mouse or key combinations.
 > Design the app in a way that you can perform actions faster by typing compared to mouse or key combinations.
 
-3. Should work stand-alone, not a plug-in to another software
+#### 3. Should work stand-alone, not a plug-in to another software
 
 > However, you can build optional extensions that integrate your application with other existing software.
 > Furthermore, you are allowed to build extensions that can plug into your software.
 
-4. Should not use relational databases
+#### 4. Should not use relational databases
 
 > Data storage must be done using text files you create yourself.
 
-5. Data should be stored locally the form of a human editable text file
+#### 5. Data should be stored locally the form of a human editable text file
 
 > This is to allow advanced users to manipulate the data by editing the data file.
 
-6. Should follow object-oriented paradigm
-7. Should work on Windows 7 or later
-8. Should work without requiring an installer
+#### 6. Should follow object-oriented paradigm
+#### 7. Should work on Windows 7 or later
+#### 8. Should work without requiring an installer
 
 > Having an optional installer is fine as long as the portable (non-installed) version has all the critical
 functionality.
 
-9. Should conform to the Java coding standard.
-10. Should process and respond to user commands within 1s.
-11. Should work on any [mainstream OS](#mainstream-os) as long as it has Java 1.8.0_60 or higher installed.
-12. A user with above average typing speed for regular English text (i.e. not code, not system admin commands)
-should be able to accomplish most of the tasks faster by typing commands as compared to using the mouse.
+#### 9. Should conform to the Java coding standard
+#### 10. Should process and respond to user commands within 1s
+#### 11. Should work on any [mainstream OS](#mainstream-os) as long as it has Java 1.8.0_60 or higher installed
+#### 12. A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster by typing commands as compared to using the mouse.
 
-
-{More to be added}
 
 ## Appendix D : Glossary
 
@@ -681,6 +793,10 @@ Here are some terms that are worth defining: <br>
 #### Sync:
 
 > Ensure that data files in two or more locations are updated
+
+#### Timed Task:
+
+> A task which is associated with specific dates and times, such as events and tasks with deadlines
 
 #### User Interface (UI):
 

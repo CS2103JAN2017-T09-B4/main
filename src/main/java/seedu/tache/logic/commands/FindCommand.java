@@ -9,6 +9,7 @@ import java.util.Set;
 public class FindCommand extends Command {
 
     public static final String COMMAND_WORD = "find";
+    public static final String SHORT_COMMAND_WORD = "f";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Finds all tasks whose names contain any of "
             + "the specified keywords (case-sensitive) and displays them as a list with index numbers.\n"
@@ -21,12 +22,11 @@ public class FindCommand extends Command {
         this.keywords = keywords;
     }
 
+    //@@author A0142255M
     @Override
     public CommandResult execute() {
         model.updateFilteredTaskList(keywords);
-        model.updateFilteredDetailedTaskList(keywords);
-        return new CommandResult(getMessageForTaskListShownSummary(model.getFilteredTaskList().size())
-                + getMessageForDetailedTaskListShownSummary(model.getFilteredDetailedTaskList().size()));
+        return new CommandResult(getMessageForTaskListShownSummary(model.getFilteredTaskList().size()));
     }
 
 }

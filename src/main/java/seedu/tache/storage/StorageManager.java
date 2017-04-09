@@ -9,6 +9,7 @@ import com.google.common.eventbus.Subscribe;
 import seedu.tache.commons.core.ComponentManager;
 import seedu.tache.commons.core.LogsCenter;
 import seedu.tache.commons.events.model.TaskManagerChangedEvent;
+import seedu.tache.commons.events.storage.DataFileLocationChangedEvent;
 import seedu.tache.commons.events.storage.DataSavingExceptionEvent;
 import seedu.tache.commons.exceptions.DataConversionException;
 import seedu.tache.model.ReadOnlyTaskManager;
@@ -48,6 +49,20 @@ public class StorageManager extends ComponentManager implements Storage {
 
 
     // ================ TaskManager methods ==============================
+
+    //@@author A0142255M
+    /**
+     * Updates the default file path of the task manager.
+     * Raises a DataFileLocationChangedEvent to inform other components of this change.
+     */
+    @Override
+    public void setTaskManagerFilePath(String newPath) {
+        assert newPath != null;
+        this.taskManagerStorage.setTaskManagerFilePath(newPath);
+        logger.fine("File path set as: " + newPath);
+        raise(new DataFileLocationChangedEvent(newPath));
+    }
+    //@@author
 
     @Override
     public String getTaskManagerFilePath() {

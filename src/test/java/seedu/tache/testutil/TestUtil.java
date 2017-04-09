@@ -16,7 +16,6 @@ import org.testfx.api.FxToolkit;
 
 import com.google.common.io.Files;
 
-import guitests.guihandles.DetailedTaskCardHandle;
 import guitests.guihandles.TaskCardHandle;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
@@ -34,7 +33,6 @@ import seedu.tache.model.TaskManager;
 import seedu.tache.model.tag.Tag;
 import seedu.tache.model.tag.UniqueTagList;
 import seedu.tache.model.task.Name;
-import seedu.tache.model.task.ReadOnlyDetailedTask;
 import seedu.tache.model.task.ReadOnlyTask;
 import seedu.tache.model.task.Task;
 import seedu.tache.storage.XmlSerializableTaskManager;
@@ -285,6 +283,7 @@ public class TestUtil {
     public static TestTask[] removeTasksFromList(final TestTask[] tasks, TestTask... tasksToRemove) {
         List<TestTask> listOfTasks = asList(tasks);
         listOfTasks.removeAll(asList(tasksToRemove));
+        listOfTasks.sort(TestTask.taskDateComparator);
         return listOfTasks.toArray(new TestTask[listOfTasks.size()]);
     }
 
@@ -319,6 +318,7 @@ public class TestUtil {
     public static TestTask[] addTasksToList(final TestTask[] tasks, TestTask... tasksToAdd) {
         List<TestTask> listOfTasks = asList(tasks);
         listOfTasks.addAll(asList(tasksToAdd));
+        listOfTasks.sort(TestTask.taskDateComparator);
         return listOfTasks.toArray(new TestTask[listOfTasks.size()]);
     }
 
@@ -332,10 +332,6 @@ public class TestUtil {
 
     public static boolean compareCardAndTask(TaskCardHandle card, ReadOnlyTask task) {
         return card.isSameTask(task);
-    }
-
-    public static boolean compareCardAndDetailedTask(DetailedTaskCardHandle card, ReadOnlyDetailedTask detailedTask) {
-        return card.isSameTask(detailedTask);
     }
 
     public static Tag[] getTagList(String tags) {
