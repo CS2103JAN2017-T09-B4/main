@@ -7,6 +7,7 @@ import static seedu.tache.commons.core.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.tache.commons.core.Messages.MESSAGE_INVALID_TASK_DISPLAYED_INDEX;
 import static seedu.tache.commons.core.Messages.MESSAGE_UNKNOWN_COMMAND;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,6 +25,7 @@ import seedu.tache.commons.core.EventsCenter;
 import seedu.tache.commons.events.model.TaskManagerChangedEvent;
 import seedu.tache.commons.events.ui.JumpToListRequestEvent;
 import seedu.tache.commons.events.ui.ShowHelpRequestEvent;
+import seedu.tache.commons.exceptions.DataConversionException;
 import seedu.tache.logic.commands.AddCommand;
 import seedu.tache.logic.commands.ClearCommand;
 import seedu.tache.logic.commands.Command;
@@ -93,7 +95,7 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void executeInvalid() {
+    public void executeInvalid() throws DataConversionException, IOException {
         String invalidCommand = "       ";
         assertCommandFailure(invalidCommand, String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
     }
@@ -101,20 +103,26 @@ public class LogicManagerTest {
     /**
      * Executes the command, confirms that a CommandException is not thrown and that the result message is correct.
      * Also confirms that both the 'task manager' and the 'last shown list' are as specified.
+     * @throws IOException If an error occurs during read or write of file.
+     * @throws DataConversionException If an error occurs during data conversion.
      * @see #assertCommandBehavior(boolean, String, String, ReadOnlyTaskManager, List)
      */
     private void assertCommandSuccess(String inputCommand, String expectedMessage,
                                       ReadOnlyTaskManager expectedTaskManager,
-                                      List<? extends ReadOnlyTask> expectedShownList) {
+                                      List<? extends ReadOnlyTask> expectedShownList)
+                                      throws DataConversionException, IOException {
         assertCommandBehavior(false, inputCommand, expectedMessage, expectedTaskManager, expectedShownList);
     }
 
     /**
      * Executes the command, confirms that a CommandException is thrown and that the result message is correct.
      * Both the 'task manager' and the 'last shown list' are verified to be unchanged.
+     * @throws IOException If an error occurs during read or write of file.
+     * @throws DataConversionException If an error occurs during data conversion.
      * @see #assertCommandBehavior(boolean, String, String, ReadOnlyTaskManager, List)
      */
-    private void assertCommandFailure(String inputCommand, String expectedMessage) {
+    private void assertCommandFailure(String inputCommand, String expectedMessage)
+                                        throws DataConversionException, IOException {
         TaskManager expectedTaskManager = new TaskManager(model.getTaskManager());
         List<ReadOnlyTask> expectedShownList = new ArrayList<>(model.getFilteredTaskList());
         assertCommandBehavior(true, inputCommand, expectedMessage, expectedTaskManager, expectedShownList);
@@ -127,10 +135,13 @@ public class LogicManagerTest {
      *      - the internal task manager data are same as those in the {@code expectedTaskManager} <br>
      *      - the backing list shown by UI matches the {@code shownList} <br>
      *      - {@code expectedTaskManager} was saved to the storage file. <br>
+     * @throws IOException If an error occurs during read or write of file.
+     * @throws DataConversionException If an error occurs during data conversion.
      */
     private void assertCommandBehavior(boolean isCommandExceptionExpected, String inputCommand, String expectedMessage,
                                        ReadOnlyTaskManager expectedTaskManager,
-                                       List<? extends ReadOnlyTask> expectedShownList) {
+                                       List<? extends ReadOnlyTask> expectedShownList)
+                                       throws DataConversionException, IOException {
 
         try {
             CommandResult result = logic.execute(inputCommand);
@@ -150,19 +161,19 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void executeUnknownCommandWord() {
+    public void executeUnknownCommandWord() throws DataConversionException, IOException {
         String unknownCommand = "uicfhmowqewca";
         assertCommandFailure(unknownCommand, MESSAGE_UNKNOWN_COMMAND);
     }
 
     @Test
-    public void executeHelp() {
+    public void executeHelp() throws DataConversionException, IOException {
         assertCommandSuccess("help", HelpCommand.SHOWING_HELP_MESSAGE, new TaskManager(), Collections.emptyList());
         assertTrue(helpShown);
     }
 
     @Test
-    public void executeExit() {
+    public void executeExit() throws DataConversionException, IOException {
         assertCommandSuccess("exit", ExitCommand.MESSAGE_EXIT_ACKNOWLEDGEMENT,
                 new TaskManager(), Collections.emptyList());
     }
@@ -185,7 +196,7 @@ public class LogicManagerTest {
 //    }
 
     @Test
-    public void executeAddInvalidTaskData() {
+    public void executeAddInvalidTaskData() throws DataConversionException, IOException {
         assertCommandFailure("add [!*^]\\[] t/HighPriority",
                 Name.MESSAGE_NAME_CONSTRAINTS);
         assertCommandFailure("add Valid Task t/invalid_-[.tag",
@@ -332,7 +343,7 @@ public class LogicManagerTest {
 
 
     @Test
-    public void executeFindInvalidArgsFormat() {
+    public void executeFindInvalidArgsFormat() throws DataConversionException, IOException {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
         assertCommandFailure("find ", expectedMessage);
     }

@@ -1,9 +1,11 @@
 package seedu.tache.logic.commands;
 
+import java.io.IOException;
 import java.util.Stack;
 
 import seedu.tache.commons.core.Config;
 import seedu.tache.commons.core.Messages;
+import seedu.tache.commons.exceptions.DataConversionException;
 import seedu.tache.logic.commands.exceptions.CommandException;
 import seedu.tache.model.Model;
 import seedu.tache.storage.Storage;
@@ -34,8 +36,10 @@ public abstract class Command {
      *
      * @return feedback message of the operation result for display
      * @throws CommandException If an error occurs during command execution.
+     * @throws IOException If an error occurs during read or write of file.
+     * @throws DataConversionException If an error occurs during data conversion.
      */
-    public abstract CommandResult execute() throws CommandException;
+    public abstract CommandResult execute() throws CommandException, DataConversionException, IOException;
 
     /**
      * Provides any needed dependencies to the command.

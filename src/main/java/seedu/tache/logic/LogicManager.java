@@ -1,5 +1,6 @@
 package seedu.tache.logic;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -10,6 +11,7 @@ import javafx.collections.ObservableList;
 import seedu.tache.commons.core.ComponentManager;
 import seedu.tache.commons.core.Config;
 import seedu.tache.commons.core.LogsCenter;
+import seedu.tache.commons.exceptions.DataConversionException;
 import seedu.tache.logic.commands.Command;
 import seedu.tache.logic.commands.CommandResult;
 import seedu.tache.logic.commands.exceptions.CommandException;
@@ -42,7 +44,7 @@ public class LogicManager extends ComponentManager implements Logic {
     }
 
     @Override
-    public CommandResult execute(String commandText) throws CommandException {
+    public CommandResult execute(String commandText) throws CommandException, DataConversionException, IOException {
         logger.info("----------------[USER COMMAND][" + commandText + "]");
         Command command = parser.parseCommand(commandText);
         command.setData(model);
