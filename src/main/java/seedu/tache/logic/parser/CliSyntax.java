@@ -25,6 +25,8 @@ public class CliSyntax {
     public static final String[] PARAMETER_START_TIME = {"start_time", "starttime", "st"};
     public static final String[] PARAMETER_END_TIME = {"end_time", "endtime", "et"};
     public static final String[] PARAMETER_TAG = {"tag", "t"};
+    public static final String[] PARAMETER_RECUR_INTERVAL = {"recur_interval", "recurinterval", "ri"};
+    public static final String[] PARAMETER_RECUR_STATUS = {"recur_status", "recurstatus", "rs"};
 
     /* List filter definitions */
     public static final String FILTER_COMPLETED = "completed";
@@ -33,11 +35,16 @@ public class CliSyntax {
     //@@author A0142255M
     public static final String FILTER_TIMED = "timed";
     public static final String FILTER_FLOATING = "floating";
-    //@@author
     //@@author A0139961U
     public static final String FILTER_DUE_TODAY = "today";
     public static final String FILTER_DUE_THIS_WEEK = "this week";
     public static final String FILTER_OVERDUE = "overdue";
+
+    //@@author A0142255M
+    /* Calendar show view options */
+    public static final String VIEW_DAY = "day";
+    public static final String VIEW_WEEK = "week";
+    public static final String VIEW_MONTH = "month";
     //@@author
 
     /* Patterns definitions */
