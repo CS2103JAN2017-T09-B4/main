@@ -50,7 +50,7 @@ public class LoadCommand extends Command implements Undoable {
         config.setTaskManagerFilePath(newPath);
         storage.setTaskManagerFilePath(newPath);
         ConfigUtil.saveConfig(config, Config.DEFAULT_CONFIG_FILE);
-        
+
         taskManagerOptional = storage.readTaskManager();
         initialData = taskManagerOptional.orElseGet(SampleDataUtil::getSampleTaskManager);
 

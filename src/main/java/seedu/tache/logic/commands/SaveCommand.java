@@ -49,14 +49,14 @@ public class SaveCommand extends Command implements Undoable {
         ReadOnlyTaskManager initialData;
         taskManagerOptional = storage.readTaskManager();
         initialData = taskManagerOptional.orElseGet(SampleDataUtil::getSampleTaskManager);
-            
+
         this.prevPath = storage.getTaskManagerFilePath()
                                .substring(0, storage.getTaskManagerFilePath().length() - FILE_NAME_LENGTH);
         config.setTaskManagerFilePath(newPath + "\\taskmanager.xml");
         storage.setTaskManagerFilePath(newPath + "\\taskmanager.xml");
 
         ConfigUtil.saveConfig(config, Config.DEFAULT_CONFIG_FILE);
-        
+
         model.resetData(initialData);
         commandSuccess = true;
         undoHistory.push(this);

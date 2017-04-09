@@ -36,8 +36,8 @@ public abstract class Command {
      *
      * @return feedback message of the operation result for display
      * @throws CommandException If an error occurs during command execution.
-     * @throws IOException 
-     * @throws DataConversionException 
+     * @throws IOException If an error occurs during read or write of file.
+     * @throws DataConversionException If an error occurs during data conversion.
      */
     public abstract CommandResult execute() throws CommandException, DataConversionException, IOException;
 

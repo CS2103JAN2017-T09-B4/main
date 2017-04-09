@@ -58,8 +58,8 @@ public class CommandBox extends UiPart<Region> {
     /**
      * Executes the user command and adds it to the list of previous commands for retrieval.
      * Handles command success as well as command failure.
-     * @throws IOException 
-     * @throws DataConversionException 
+     * @throws IOException If an error occurs during read or write of file.
+     * @throws DataConversionException If an error occurs during data conversion.
      */
     @FXML
     private void handleCommandInputChanged() throws DataConversionException, IOException {

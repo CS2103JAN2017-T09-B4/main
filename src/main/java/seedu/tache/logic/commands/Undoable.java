@@ -23,8 +23,8 @@ public interface Undoable {
      * Attempts to undo the command.
      * If the undo is successful, returns the CommandResult feedback string of the original command
      * @throws CommandException if the undo operation fails
-     * @throws IOException 
-     * @throws DataConversionException 
+     * @throws IOException If an error occurs during read or write of file.
+     * @throws DataConversionException If an error occurs during data conversion.
      */
     public abstract String undo() throws CommandException, DataConversionException, IOException;
 }

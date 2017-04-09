@@ -103,24 +103,26 @@ public class LogicManagerTest {
     /**
      * Executes the command, confirms that a CommandException is not thrown and that the result message is correct.
      * Also confirms that both the 'task manager' and the 'last shown list' are as specified.
-     * @throws IOException 
-     * @throws DataConversionException 
+     * @throws IOException If an error occurs during read or write of file.
+     * @throws DataConversionException If an error occurs during data conversion.
      * @see #assertCommandBehavior(boolean, String, String, ReadOnlyTaskManager, List)
      */
     private void assertCommandSuccess(String inputCommand, String expectedMessage,
                                       ReadOnlyTaskManager expectedTaskManager,
-                                      List<? extends ReadOnlyTask> expectedShownList) throws DataConversionException, IOException {
+                                      List<? extends ReadOnlyTask> expectedShownList)
+                                      throws DataConversionException, IOException {
         assertCommandBehavior(false, inputCommand, expectedMessage, expectedTaskManager, expectedShownList);
     }
 
     /**
      * Executes the command, confirms that a CommandException is thrown and that the result message is correct.
      * Both the 'task manager' and the 'last shown list' are verified to be unchanged.
-     * @throws IOException 
-     * @throws DataConversionException 
+     * @throws IOException If an error occurs during read or write of file.
+     * @throws DataConversionException If an error occurs during data conversion.
      * @see #assertCommandBehavior(boolean, String, String, ReadOnlyTaskManager, List)
      */
-    private void assertCommandFailure(String inputCommand, String expectedMessage) throws DataConversionException, IOException {
+    private void assertCommandFailure(String inputCommand, String expectedMessage)
+                                        throws DataConversionException, IOException {
         TaskManager expectedTaskManager = new TaskManager(model.getTaskManager());
         List<ReadOnlyTask> expectedShownList = new ArrayList<>(model.getFilteredTaskList());
         assertCommandBehavior(true, inputCommand, expectedMessage, expectedTaskManager, expectedShownList);
@@ -133,12 +135,13 @@ public class LogicManagerTest {
      *      - the internal task manager data are same as those in the {@code expectedTaskManager} <br>
      *      - the backing list shown by UI matches the {@code shownList} <br>
      *      - {@code expectedTaskManager} was saved to the storage file. <br>
-     * @throws IOException 
-     * @throws DataConversionException 
+     * @throws IOException If an error occurs during read or write of file.
+     * @throws DataConversionException If an error occurs during data conversion.
      */
     private void assertCommandBehavior(boolean isCommandExceptionExpected, String inputCommand, String expectedMessage,
                                        ReadOnlyTaskManager expectedTaskManager,
-                                       List<? extends ReadOnlyTask> expectedShownList) throws DataConversionException, IOException {
+                                       List<? extends ReadOnlyTask> expectedShownList)
+                                       throws DataConversionException, IOException {
 
         try {
             CommandResult result = logic.execute(inputCommand);
